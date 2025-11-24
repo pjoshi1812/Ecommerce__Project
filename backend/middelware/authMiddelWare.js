@@ -23,9 +23,10 @@ const protect = async(req,res,next)=>{
 };
 //Middelware to check if user is an admin
 const admin =(req,res,next)=>{
-  if(req.user && req.user.role=="admin"){
+  if(req.user && req.user.role==="admin"){
     next();
   }else{
+    console.log("Admin access denied for user:", req.user ? req.user._id : "unknown", "with role:", req.user ? req.user.role : "none");
     res.status(403).json({message:"Not Authorized as admin"})
   }
 };

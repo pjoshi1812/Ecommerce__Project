@@ -41,6 +41,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api", subscribeRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+// Register admin order routes
 app.use("/api/admin", adminOrderRoutes);
 
 app.get("/", (req, res) => {

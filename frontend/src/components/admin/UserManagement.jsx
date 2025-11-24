@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { featchUsers, addUsers, updateUser, deleteUser } from "../../redux/slices/adminSlice";
+import { fetchUsers, addUsers, updateUser, deleteUser } from "../../redux/slices/adminSlice";
 
 const UserManagement = () => {
   const dispatch = useDispatch();
   const { users, loading, error } = useSelector((state) => state.admin);
 
   useEffect(() => {
-    dispatch(featchUsers());
+    dispatch(fetchUsers());
   }, [dispatch]);
 
   const [formData, setFormData] = useState({
