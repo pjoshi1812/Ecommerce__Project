@@ -255,8 +255,9 @@ spec:
                         sonar-scanner \
                             -Dsonar.projectKey=Ecommerce-Project2401077 \
                             -Dsonar.sources=frontend,backend \
-                            -Dsonar.host.url=http://sonarqube.imcc.com \
+                            
                             -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+                            -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
                     '''
                 }
             }
