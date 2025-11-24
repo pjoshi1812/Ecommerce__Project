@@ -249,19 +249,19 @@ spec:
 
         /* 4. SONARQUBE */
         stage('SonarQube Analysis') {
-            steps {
-                container('sonar-scanner') {
-                    sh '''
-                        sonar-scanner \
-                            -Dsonar.projectKey=Ecommerce-Project2401077 \
-                            -Dsonar.sources=frontend,backend \
-                            
-                            -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
-                            -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                    '''
-                }
-            }
+    steps {
+        container('sonar-scanner') {
+            sh '''
+                sonar-scanner \
+                -Dsonar.projectKey=Ecommerce-Project2401077 \
+                -Dsonar.sources=frontend,backend \
+                -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+            '''
         }
+    }
+}
+
 
         /* 5. LOGIN TO NEXUS */
         stage('Login to Nexus Registry') {
