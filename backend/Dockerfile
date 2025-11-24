@@ -1,19 +1,34 @@
-# Use Node.js 20 Alpine
-FROM node:20-alpine
+# # Use Node.js 20 Alpine
+# FROM node:20-alpine
+
+# WORKDIR /app
+
+# # Copy package.json & package-lock.json
+# COPY package*.json ./
+
+# # Install dependencies
+# RUN npm install
+
+# # Copy all backend files
+# COPY . .
+
+# # Expose backend port from .env (9000)
+# EXPOSE 9000
+
+# # Run server
+# CMD ["node", "server.js"]
+
+FROM mirror.gcr.io/library/node:18
 
 WORKDIR /app
 
-# Copy package.json & package-lock.json
 COPY package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Install dependencies
-RUN npm install
-
-# Copy all backend files
 COPY . .
 
-# Expose backend port from .env (9000)
-EXPOSE 9000
+# Expose your API port
+EXPOSE 9001
 
-# Run server
-CMD ["node", "server.js"]
+# Start your backend application
+CMD ["node", "server.js"]
