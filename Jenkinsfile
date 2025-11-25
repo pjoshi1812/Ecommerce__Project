@@ -271,19 +271,25 @@ spec:
         }
 
         /* 6. PUSH IMAGES TO NEXUS */
-        stage('Push to Nexus') {
+       stage('Push to Nexus') {
             steps {
                 container('dind') {
                     sh '''
-                        docker tag ecommerce-frontend:latest nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-frontend:v1
-                        docker tag ecommerce-backend:latest nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-backend:v1
+                        # Tag images correctly inside project folder
+                        docker tag ecommerce-frontend:latest \
+                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
 
-                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-frontend:v1
-                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-backend:v1
+                        docker tag ecommerce-backend:latest \
+                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
+
+                        # Push to Nexus registry
+                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
+                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
                     '''
                 }
             }
         }
+
 
         /* 7. DEPLOY TO K8S */
         /* 7. DEPLOY TO K8S */
