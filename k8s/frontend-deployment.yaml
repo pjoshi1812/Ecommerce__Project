@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-frontend
+  namespace: 2401077
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce-frontend
+  template:
+    metadata:
+      labels:
+        app: ecommerce-frontend
+    spec:
+      containers:
+        - name: ecommerce-frontend
+          image: nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-frontend:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
