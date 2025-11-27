@@ -151,165 +151,165 @@
 //         }
 //     }
 // // }
-pipeline {
-    agent {
-        kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
+// pipeline {
+//     agent {
+//         kubernetes {
+//             yaml '''
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
 
-  - name: node
-    image: mirror.gcr.io/library/node:20
-    command: ['cat']
-    tty: true
+//   - name: node
+//     image: mirror.gcr.io/library/node:20
+//     command: ['cat']
+//     tty: true
 
-  - name: sonar-scanner
-    image: sonarsource/sonar-scanner-cli
-    command: ['cat']
-    tty: true
+//   - name: sonar-scanner
+//     image: sonarsource/sonar-scanner-cli
+//     command: ['cat']
+//     tty: true
 
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command: ['cat']
-    tty: true
-    env:
-    - name: KUBECONFIG
-      value: /kube/config
-    volumeMounts:
-    - name: kubeconfig-secret
-      mountPath: /kube/config
-      subPath: kubeconfig
+//   - name: kubectl
+//     image: bitnami/kubectl:latest
+//     command: ['cat']
+//     tty: true
+//     env:
+//     - name: KUBECONFIG
+//       value: /kube/config
+//     volumeMounts:
+//     - name: kubeconfig-secret
+//       mountPath: /kube/config
+//       subPath: kubeconfig
 
-  - name: dind
-    image: docker:dind
-    args:
-      - "--storage-driver=overlay2"
-      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
-    securityContext:
-      privileged: true
-    env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
+//   - name: dind
+//     image: docker:dind
+//     args:
+//       - "--storage-driver=overlay2"
+//       - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+//     securityContext:
+//       privileged: true
+//     env:
+//     - name: DOCKER_TLS_CERTDIR
+//       value: ""
 
-  volumes:
-  - name: kubeconfig-secret
-    secret:
-      secretName: kubeconfig-secret
-'''
-        }
-    }
+//   volumes:
+//   - name: kubeconfig-secret
+//     secret:
+//       secretName: kubeconfig-secret
+// '''
+//         }
+//     }
 
-    stages {
+//     stages {
 
-        /* 1. INSTALL + BUILD FRONTEND */
-        stage('Install + Build Frontend') {
-            steps {
-                dir('frontend') {
-                    container('node') {
-                        sh '''
-                            npm install
-                            npm run build
-                        '''
-                    }
-                }
-            }
-        }
+//         /* 1. INSTALL + BUILD FRONTEND */
+//         stage('Install + Build Frontend') {
+//             steps {
+//                 dir('frontend') {
+//                     container('node') {
+//                         sh '''
+//                             npm install
+//                             npm run build
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
 
-        /* 2. INSTALL BACKEND */
-        stage('Install Backend') {
-            steps {
-                dir('backend') {
-                    container('node') {
-                        sh '''
-                            npm install
-                        '''
-                    }
-                }
-            }
-        }
+//         /* 2. INSTALL BACKEND */
+//         stage('Install Backend') {
+//             steps {
+//                 dir('backend') {
+//                     container('node') {
+//                         sh '''
+//                             npm install
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
 
-        /* 3. BUILD DOCKER IMAGES */
-        stage('Build Docker Images') {
-            steps {
-                container('dind') {
-                    sh '''
-                        sleep 10
-                        docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
-                        docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
-                    '''
-                }
-            }
-        }
+//         /* 3. BUILD DOCKER IMAGES */
+//         stage('Build Docker Images') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         sleep 10
+//                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
+//                         docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* 4. SONARQUBE */
-        stage('SonarQube Analysis') {
-            steps {
-                container('sonar-scanner') {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=Ecommerce-Project2401077 \
-                        -Dsonar.sources=frontend,backend \
-                        -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                        -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
-                    '''
-                }
-            }
-        }
+//         /* 4. SONARQUBE */
+//         stage('SonarQube Analysis') {
+//             steps {
+//                 container('sonar-scanner') {
+//                     sh '''
+//                         sonar-scanner \
+//                         -Dsonar.projectKey=Ecommerce-Project2401077 \
+//                         -Dsonar.sources=frontend,backend \
+//                         -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+//                         -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* 5. LOGIN TO NEXUS */
-        stage('Login to Nexus Registry') {
-            steps {
-                container('dind') {
-                    sh '''
-                        docker login http://nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085 \
-                            -u student -p Imcc@2025
-                    '''
-                }
-            }
-        }
+//         /* 5. LOGIN TO NEXUS */
+//         stage('Login to Nexus Registry') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         docker login http://nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085 \
+//                             -u student -p Imcc@2025
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* 6. PUSH IMAGES TO NEXUS */
-       stage('Push to Nexus') {
-            steps {
-                container('dind') {
-                    sh '''
-                        # Tag images correctly inside project folder
-                        docker tag ecommerce-frontend:latest \
-                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
+//         /* 6. PUSH IMAGES TO NEXUS */
+//        stage('Push to Nexus') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         # Tag images correctly inside project folder
+//                         docker tag ecommerce-frontend:latest \
+//                         nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
 
-                        docker tag ecommerce-backend:latest \
-                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
+//                         docker tag ecommerce-backend:latest \
+//                         nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
 
-                        # Push to Nexus registry
-                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
-                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
-                    '''
-                }
-            }
-        }
+//                         # Push to Nexus registry
+//                         docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
+//                         docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
+//                     '''
+//                 }
+//             }
+//         }
 
 
-        /* 7. DEPLOY TO K8S */
-        /* 7. DEPLOY TO K8S */
-    stage('Deploy to Kubernetes') {
-        steps {
-            container('kubectl') {
-                sh '''
-                    # Apply manifests
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
+//         /* 7. DEPLOY TO K8S */
+//         /* 7. DEPLOY TO K8S */
+//     stage('Deploy to Kubernetes') {
+//         steps {
+//             container('kubectl') {
+//                 sh '''
+//                     # Apply manifests
+//                     kubectl apply -f k8s/deployment.yaml
+//                     kubectl apply -f k8s/service.yaml
 
-                    # Wait for deployment rollout
-                    kubectl rollout status deployment/ecommerce-deployment -n 2401077 --timeout=120s
-                '''
-            }
-        }
-    }
+//                     # Wait for deployment rollout
+//                     kubectl rollout status deployment/ecommerce-deployment -n 2401077 --timeout=120s
+//                 '''
+//             }
+//         }
+//     }
 
-    }
-}
+//     }
+// }
 // pipeline {
 //     agent {
 //         kubernetes {
@@ -818,3 +818,193 @@ spec:
 //         }
 //     }
 // }
+
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+
+  - name: node
+    image: mirror.gcr.io/library/node:20
+    command: ["cat"]
+    tty: true
+
+  - name: sonar-scanner
+    image: sonarsource/sonar-scanner-cli
+    command: ["cat"]
+    tty: true
+
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["cat"]
+    tty: true
+    env:
+    - name: KUBECONFIG
+      value: /kube/config
+    volumeMounts:
+    - mountPath: /kube/config
+      name: kubeconfig-secret
+      subPath: kubeconfig
+
+  - name: dind
+    image: docker:dind
+    args: ["--storage-driver=overlay2"]
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    volumeMounts:
+    - mountPath: /etc/docker/daemon.json
+      name: docker-config
+      subPath: daemon.json
+
+  - name: jnlp
+    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+
+  volumes:
+  - name: docker-config
+    configMap:
+      name: docker-daemon-config
+
+  - name: kubeconfig-secret
+    secret:
+      secretName: kubeconfig-secret
+'''
+        }
+    }
+
+    environment {
+        NAMESPACE = "ecommerce-2401077"
+        REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+    }
+
+    stages {
+
+        stage('CLEAN OLD AGENT PODS') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                        echo "Cleaning old Jenkins agent pods..."
+                        kubectl delete pod -n jenkins --field-selector=status.phase==Succeeded || true
+                        kubectl delete pod -n jenkins --field-selector=status.phase==Failed || true
+                    '''
+                }
+            }
+        }
+
+        stage('CHECK') {
+            steps {
+                echo "Pipeline active. Using namespace = ${NAMESPACE}"
+            }
+        }
+
+        stage('Install + Build Frontend') {
+            steps {
+                dir('frontend') {
+                    container('node') {
+                        sh '''
+                            npm install
+                            npm run build
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Install Backend') {
+            steps {
+                dir('backend') {
+                    container('node') {
+                        sh 'npm install'
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                container('dind') {
+                    sh '''
+                        sleep 10
+                        docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
+                        docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
+                    '''
+                }
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                container('sonar-scanner') {
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=Ecommerce-Project2401077 \
+                        -Dsonar.sources=frontend,backend \
+                        -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                        -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+                    '''
+                }
+            }
+        }
+
+        stage('Login to Nexus Registry') {
+            steps {
+                container('dind') {
+                    sh '''
+                        docker login ${REGISTRY} -u student -p Imcc@2025
+                    '''
+                }
+            }
+        }
+
+        stage('Push Images to Nexus') {
+            steps {
+                container('dind') {
+                    sh '''
+                        docker tag ecommerce-backend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+                        docker tag ecommerce-frontend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+
+                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Create Namespace + Secret') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                        kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
+
+                        kubectl create secret docker-registry nexus-secret \
+                        --docker-server=${REGISTRY} \
+                        --docker-username=student \
+                        --docker-password=Imcc@2025 \
+                        --namespace=${NAMESPACE} \
+                        --dry-run=client -o yaml | kubectl apply -f -
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+
+                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
+                    '''
+                }
+            }
+        }
+    }
+}
