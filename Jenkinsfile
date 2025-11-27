@@ -640,7 +640,7 @@ spec:
   containers:
 
   - name: node
-    image: mirror.gcr.io/library/node:20
+    image: node:20.11   # Stable npm + works well for vite
     command: ["cat"]
     tty: true
 
@@ -697,6 +697,7 @@ spec:
 
     stages {
 
+        /* CHECK */
         stage('CHECK') {
             steps {
                 echo "Pipeline running for namespace ${NAMESPACE}"
@@ -709,7 +710,19 @@ spec:
                 dir('frontend') {
                     container('node') {
                         sh '''
+                            echo "Cleaning npm cache"
+                            npm cache clean --force || true
+
+                            echo "Setting Node memory"
+                            export NODE_OPTIONS="--max-old-space-size=2048"
+
+                            echo "Adding node_modules/.bin to PATH"
+                            export PATH=$PATH:./node_modules/.bin
+
+                            echo "Installing dependencies"
                             npm install
+
+                            echo "Building frontend using Vite"
                             npm run build
                         '''
                     }
@@ -723,6 +736,8 @@ spec:
                 dir('backend') {
                     container('node') {
                         sh '''
+                            npm cache clean --force || true
+                            export NODE_OPTIONS="--max-old-space-size=2048"
                             npm install
                         '''
                     }
@@ -736,6 +751,7 @@ spec:
                 container('dind') {
                     sh '''
                         sleep 10
+                        echo "Building Docker images"
 
                         docker build -t ecommerce__project-frontend:latest ./frontend
                         docker build -t ecommerce__project-backend:latest ./backend
@@ -764,20 +780,23 @@ spec:
             steps {
                 container('dind') {
                     sh '''
+                        echo "Logging in to Nexus"
                         docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
                     '''
                 }
             }
         }
 
-        /* Push Images to Nexus */
+        /* Push Images */
         stage('Push Images to Nexus') {
             steps {
                 container('dind') {
                     sh '''
+                        echo "Tagging images"
                         docker tag ecommerce__project-frontend:latest ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
                         docker tag ecommerce__project-backend:latest ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
 
+                        echo "Pushing images"
                         docker push ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
                         docker push ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
                     '''
@@ -785,7 +804,7 @@ spec:
             }
         }
 
-        /* Create Namespace + Secret */
+        /* Create Namespace + Secrets */
         stage('Create Namespace + Secrets') {
             steps {
                 container('kubectl') {
@@ -808,9 +827,11 @@ spec:
             steps {
                 container('kubectl') {
                     sh '''
+                        echo "Applying Deployment & Service"
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
 
+                        echo "Waiting for backend rollout"
                         kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
                     '''
                 }
@@ -818,6 +839,7 @@ spec:
         }
     }
 }
+
 
 // pipeline {
 //     agent {
