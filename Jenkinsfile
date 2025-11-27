@@ -1287,8 +1287,6 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-
-  // ---------------- NODE CONTAINER (Frontend + Backend Build) ----------------
   - name: node
     image: mirror.gcr.io/library/node:20
     command: ["cat"]
@@ -1301,13 +1299,11 @@ spec:
         cpu: "1"
         memory: "2Gi"
 
-  // ---------------- SONAR SCANNER ----------------
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
     command: ["cat"]
     tty: true
 
-  // ---------------- KUBECTL ----------------
   - name: kubectl
     image: bitnami/kubectl:latest
     command: ["cat"]
@@ -1320,7 +1316,6 @@ spec:
         mountPath: /kube/config
         subPath: kubeconfig
 
-  // ---------------- DOCKER (DinD) ----------------
   - name: dind
     image: docker:dind
     args:
@@ -1339,7 +1334,6 @@ spec:
         memory: "2Gi"
         cpu: "1"
 
-  // ---------------- JENKINS AGENT ----------------
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
 
@@ -1364,27 +1358,14 @@ spec:
             }
         }
 
-        // ---------------- FRONTEND BUILD ----------------
         stage("Install + Build Frontend") {
             steps {
                 dir("frontend") {
                     container("node") {
                         sh """
-                            echo 'Installing frontend dependencies...'
                             npm install --legacy-peer-deps
-
-                            echo 'Installing Vite explicitly...'
                             npm install -D vite
-
-                            echo "PATH before:"
-                            echo \$PATH
-
                             export PATH=\$PATH:./node_modules/.bin
-
-                            echo "PATH after:"
-                            echo \$PATH
-
-                            echo 'Running Vite build...'
                             npm run build
                         """
                     }
@@ -1392,26 +1373,21 @@ spec:
             }
         }
 
-        // ---------------- BACKEND BUILD ----------------
         stage("Install Backend") {
             steps {
                 dir("backend") {
                     container("node") {
-                        sh """
-                            npm install --legacy-peer-deps
-                        """
+                        sh "npm install --legacy-peer-deps"
                     }
                 }
             }
         }
 
-        // ---------------- DOCKER BUILD ----------------
         stage("Build Docker Images") {
             steps {
                 container("dind") {
                     sh """
                         sleep 8
-
                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
                         docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
                     """
@@ -1419,7 +1395,6 @@ spec:
             }
         }
 
-        // ---------------- SONARQUBE ----------------
         stage("SonarQube Analysis") {
             steps {
                 container("sonar-scanner") {
@@ -1434,18 +1409,14 @@ spec:
             }
         }
 
-        // ---------------- DOCKER LOGIN ----------------
         stage("Login to Nexus") {
             steps {
                 container("dind") {
-                    sh """
-                        docker login ${NEXUS} -u student -p Imcc@2025
-                    """
+                    sh "docker login ${NEXUS} -u student -p Imcc@2025"
                 }
             }
         }
 
-        // ---------------- PUSH IMAGES ----------------
         stage("Push Images to Nexus") {
             steps {
                 container("dind") {
@@ -1460,14 +1431,12 @@ spec:
             }
         }
 
-        // ---------------- KUBERNETES DEPLOY ----------------
         stage("Deploy to Kubernetes") {
             steps {
                 container("kubectl") {
                     sh """
                         kubectl apply -n ${NAMESPACE} -f k8s/deployment.yaml
                         kubectl apply -n ${NAMESPACE} -f k8s/service.yaml
-
                         kubectl rollout status deployment/ecommerce-deployment -n ${NAMESPACE} --timeout=180s
                     """
                 }
