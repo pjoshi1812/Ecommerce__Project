@@ -1278,6 +1278,7 @@
 
 //     }
 // }
+        }
 pipeline {
 
     agent {
@@ -1288,30 +1289,26 @@ kind: Pod
 spec:
   containers:
 
+  # ---------------- NODE CONTAINER (Frontend + Backend Build) ----------------
   - name: node
     image: mirror.gcr.io/library/node:20
     command: ["cat"]
     tty: true
     resources:
       requests:
-        cpu: "200m"
-        memory: "512Mi"
+        cpu: "300m"
+        memory: "1Gi"
       limits:
         cpu: "1"
-        memory: "1Gi"
+        memory: "2Gi"
 
+  # ---------------- SONAR SCANNER ----------------
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
     command: ["cat"]
     tty: true
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "384Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
 
+  # ---------------- KUBECTL ----------------
   - name: kubectl
     image: bitnami/kubectl:latest
     command: ["cat"]
@@ -1323,14 +1320,8 @@ spec:
       - name: kubeconfig-secret
         mountPath: /kube/config
         subPath: kubeconfig
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
 
+  # ---------------- DOCKER (DinD) ----------------
   - name: dind
     image: docker:dind
     args:
@@ -1349,15 +1340,9 @@ spec:
         memory: "2Gi"
         cpu: "1"
 
+  # ---------------- JENKINS AGENT ----------------
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
-      limits:
-        memory: "512Mi"
-        cpu: "300m"
 
   volumes:
     - name: kubeconfig-secret
@@ -1369,25 +1354,38 @@ spec:
 
     environment {
         NAMESPACE = "ecommerce-2401077"
-        NEXUS_REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
+        NEXUS = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
     }
 
     stages {
 
-        /* 1. CHECK */
         stage("CHECK") {
             steps {
-                echo "Pipeline started for namespace: ${NAMESPACE}"
+                echo "Pipeline started for ${NAMESPACE}"
             }
         }
 
-        /* 2. INSTALL + BUILD FRONTEND */
+        # ---------------- FRONTEND BUILD ----------------
         stage("Install + Build Frontend") {
             steps {
                 dir("frontend") {
                     container("node") {
                         sh """
-                            npm install
+                            echo 'Installing frontend dependencies...'
+                            npm install --legacy-peer-deps
+
+                            echo 'Installing Vite explicitly...'
+                            npm install -D vite
+
+                            echo "PATH before:"
+                            echo \$PATH
+
+                            export PATH=\$PATH:./node_modules/.bin
+
+                            echo "PATH after:"
+                            echo \$PATH
+
+                            echo 'Running Vite build...'
                             npm run build
                         """
                     }
@@ -1395,7 +1393,7 @@ spec:
             }
         }
 
-        /* 3. INSTALL BACKEND */
+        # ---------------- BACKEND BUILD ----------------
         stage("Install Backend") {
             steps {
                 dir("backend") {
@@ -1408,12 +1406,13 @@ spec:
             }
         }
 
-        /* 4. BUILD DOCKER IMAGES */
+        # ---------------- DOCKER BUILD ----------------
         stage("Build Docker Images") {
             steps {
                 container("dind") {
                     sh """
-                        sleep 10
+                        sleep 8
+
                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
                         docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
                     """
@@ -1421,7 +1420,7 @@ spec:
             }
         }
 
-        /* 5. SONARQUBE */
+        # ---------------- SONARQUBE ----------------
         stage("SonarQube Analysis") {
             steps {
                 container("sonar-scanner") {
@@ -1436,33 +1435,33 @@ spec:
             }
         }
 
-        /* 6. LOGIN TO NEXUS */
-        stage("Login to Nexus Registry") {
+        # ---------------- DOCKER LOGIN ----------------
+        stage("Login to Nexus") {
             steps {
                 container("dind") {
                     sh """
-                        docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
+                        docker login ${NEXUS} -u student -p Imcc@2025
                     """
                 }
             }
         }
 
-        /* 7. PUSH TO NEXUS */
-        stage("Push to Nexus") {
+        # ---------------- PUSH IMAGES ----------------
+        stage("Push Images to Nexus") {
             steps {
                 container("dind") {
                     sh """
-                        docker tag ecommerce-frontend:latest ${NEXUS_REGISTRY}/ecommerce-frontend:v1
-                        docker tag ecommerce-backend:latest ${NEXUS_REGISTRY}/ecommerce-backend:v1
+                        docker tag ecommerce-frontend:latest ${NEXUS}/ecommerce-frontend:v1
+                        docker tag ecommerce-backend:latest ${NEXUS}/ecommerce-backend:v1
 
-                        docker push ${NEXUS_REGISTRY}/ecommerce-frontend:v1
-                        docker push ${NEXUS_REGISTRY}/ecommerce-backend:v1
+                        docker push ${NEXUS}/ecommerce-frontend:v1
+                        docker push ${NEXUS}/ecommerce-backend:v1
                     """
                 }
             }
         }
 
-        /* 8. DEPLOY TO KUBERNETES */
+        # ---------------- KUBERNETES DEPLOY ----------------
         stage("Deploy to Kubernetes") {
             steps {
                 container("kubectl") {
@@ -1470,7 +1469,7 @@ spec:
                         kubectl apply -n ${NAMESPACE} -f k8s/deployment.yaml
                         kubectl apply -n ${NAMESPACE} -f k8s/service.yaml
 
-                        kubectl rollout status deployment/ecommerce-deployment -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/ecommerce-deployment -n ${NAMESPACE} --timeout=180s
                     """
                 }
             }
