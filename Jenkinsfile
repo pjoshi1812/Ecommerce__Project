@@ -630,215 +630,215 @@
 //         }
 //     }
 // }
-pipeline {
-    agent {
-        kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
+// pipeline {
+//     agent {
+//         kubernetes {
+//             yaml '''
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
 
-  - name: node
-    image: node:20.11   # Stable npm + works well for vite
-    command: ["cat"]
-    tty: true
+//   - name: node
+//     image: node:20.11   # Stable npm + works well for vite
+//     command: ["cat"]
+//     tty: true
 
-  - name: sonar-scanner
-    image: sonarsource/sonar-scanner-cli
-    command: ["cat"]
-    tty: true
+//   - name: sonar-scanner
+//     image: sonarsource/sonar-scanner-cli
+//     command: ["cat"]
+//     tty: true
 
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command: ["cat"]
-    tty: true
-    securityContext:
-      runAsUser: 0
-    env:
-    - name: KUBECONFIG
-      value: /kube/config
-    volumeMounts:
-    - name: kubeconfig-secret
-      mountPath: /kube/config
-      subPath: kubeconfig
+//   - name: kubectl
+//     image: bitnami/kubectl:latest
+//     command: ["cat"]
+//     tty: true
+//     securityContext:
+//       runAsUser: 0
+//     env:
+//     - name: KUBECONFIG
+//       value: /kube/config
+//     volumeMounts:
+//     - name: kubeconfig-secret
+//       mountPath: /kube/config
+//       subPath: kubeconfig
 
-  - name: dind
-    image: docker:dind
-    args: ["--storage-driver=overlay2"]
-    securityContext:
-      privileged: true
-    env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
-    volumeMounts:
-    - name: docker-config
-      mountPath: /etc/docker/daemon.json
-      subPath: daemon.json
+//   - name: dind
+//     image: docker:dind
+//     args: ["--storage-driver=overlay2"]
+//     securityContext:
+//       privileged: true
+//     env:
+//     - name: DOCKER_TLS_CERTDIR
+//       value: ""
+//     volumeMounts:
+//     - name: docker-config
+//       mountPath: /etc/docker/daemon.json
+//       subPath: daemon.json
 
-  - name: jnlp
-    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+//   - name: jnlp
+//     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
 
-  volumes:
-  - name: docker-config
-    configMap:
-      name: docker-daemon-config
-  - name: kubeconfig-secret
-    secret:
-      secretName: kubeconfig-secret
-'''
-        }
-    }
+//   volumes:
+//   - name: docker-config
+//     configMap:
+//       name: docker-daemon-config
+//   - name: kubeconfig-secret
+//     secret:
+//       secretName: kubeconfig-secret
+// '''
+//         }
+//     }
 
-    environment {
-        NAMESPACE = 'ecommerce-2401077'
-        NEXUS_REGISTRY = 'nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077'
-    }
+//     environment {
+//         NAMESPACE = 'ecommerce-2401077'
+//         NEXUS_REGISTRY = 'nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077'
+//     }
 
-    stages {
+//     stages {
 
-        /* CHECK */
-        stage('CHECK') {
-            steps {
-                echo "Pipeline running for namespace ${NAMESPACE}"
-            }
-        }
+//         /* CHECK */
+//         stage('CHECK') {
+//             steps {
+//                 echo "Pipeline running for namespace ${NAMESPACE}"
+//             }
+//         }
 
-        /* Build Frontend */
-        stage('Build Frontend') {
-            steps {
-                dir('frontend') {
-                    container('node') {
-                        sh '''
-                            echo "Cleaning npm cache"
-                            npm cache clean --force || true
+//         /* Build Frontend */
+//         stage('Build Frontend') {
+//             steps {
+//                 dir('frontend') {
+//                     container('node') {
+//                         sh '''
+//                             echo "Cleaning npm cache"
+//                             npm cache clean --force || true
 
-                            echo "Setting Node memory"
-                            export NODE_OPTIONS="--max-old-space-size=2048"
+//                             echo "Setting Node memory"
+//                             export NODE_OPTIONS="--max-old-space-size=2048"
 
-                            echo "Adding node_modules/.bin to PATH"
-                            export PATH=$PATH:./node_modules/.bin
+//                             echo "Adding node_modules/.bin to PATH"
+//                             export PATH=$PATH:./node_modules/.bin
 
-                            echo "Installing dependencies"
-                            npm install
+//                             echo "Installing dependencies"
+//                             npm install
 
-                            echo "Building frontend using Vite"
-                            npm run build
-                        '''
-                    }
-                }
-            }
-        }
+//                             echo "Building frontend using Vite"
+//                             npm run build
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
 
-        /* Build Backend */
-        stage('Build Backend') {
-            steps {
-                dir('backend') {
-                    container('node') {
-                        sh '''
-                            npm cache clean --force || true
-                            export NODE_OPTIONS="--max-old-space-size=2048"
-                            npm install
-                        '''
-                    }
-                }
-            }
-        }
+//         /* Build Backend */
+//         stage('Build Backend') {
+//             steps {
+//                 dir('backend') {
+//                     container('node') {
+//                         sh '''
+//                             npm cache clean --force || true
+//                             export NODE_OPTIONS="--max-old-space-size=2048"
+//                             npm install
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
 
-        /* Build Docker Images */
-        stage('Build Docker Images') {
-            steps {
-                container('dind') {
-                    sh '''
-                        sleep 10
-                        echo "Building Docker images"
+//         /* Build Docker Images */
+//         stage('Build Docker Images') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         sleep 10
+//                         echo "Building Docker images"
 
-                        docker build -t ecommerce__project-frontend:latest ./frontend
-                        docker build -t ecommerce__project-backend:latest ./backend
-                    '''
-                }
-            }
-        }
+//                         docker build -t ecommerce__project-frontend:latest ./frontend
+//                         docker build -t ecommerce__project-backend:latest ./backend
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* SonarQube */
-        stage('SonarQube Analysis') {
-            steps {
-                container('sonar-scanner') {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=ecommerce-2401077 \
-                        -Dsonar.sources=frontend,backend \
-                        -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                        -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
-                    '''
-                }
-            }
-        }
+//         /* SonarQube */
+//         stage('SonarQube Analysis') {
+//             steps {
+//                 container('sonar-scanner') {
+//                     sh '''
+//                         sonar-scanner \
+//                         -Dsonar.projectKey=ecommerce-2401077 \
+//                         -Dsonar.sources=frontend,backend \
+//                         -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+//                         -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* Nexus Login */
-        stage('Login to Nexus Registry') {
-            steps {
-                container('dind') {
-                    sh '''
-                        echo "Logging in to Nexus"
-                        docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
-                    '''
-                }
-            }
-        }
+//         /* Nexus Login */
+//         stage('Login to Nexus Registry') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         echo "Logging in to Nexus"
+//                         docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* Push Images */
-        stage('Push Images to Nexus') {
-            steps {
-                container('dind') {
-                    sh '''
-                        echo "Tagging images"
-                        docker tag ecommerce__project-frontend:latest ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
-                        docker tag ecommerce__project-backend:latest ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
+//         /* Push Images */
+//         stage('Push Images to Nexus') {
+//             steps {
+//                 container('dind') {
+//                     sh '''
+//                         echo "Tagging images"
+//                         docker tag ecommerce__project-frontend:latest ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
+//                         docker tag ecommerce__project-backend:latest ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
 
-                        echo "Pushing images"
-                        docker push ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
-                        docker push ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
-                    '''
-                }
-            }
-        }
+//                         echo "Pushing images"
+//                         docker push ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
+//                         docker push ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* Create Namespace + Secrets */
-        stage('Create Namespace + Secrets') {
-            steps {
-                container('kubectl') {
-                    sh '''
-                        kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
+//         /* Create Namespace + Secrets */
+//         stage('Create Namespace + Secrets') {
+//             steps {
+//                 container('kubectl') {
+//                     sh '''
+//                         kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
 
-                        kubectl create secret docker-registry nexus-secret \
-                          --docker-server=${NEXUS_REGISTRY} \
-                          --docker-username=student \
-                          --docker-password=Imcc@2025 \
-                          --namespace=${NAMESPACE} \
-                          --dry-run=client -o yaml | kubectl apply -f -
-                    '''
-                }
-            }
-        }
+//                         kubectl create secret docker-registry nexus-secret \
+//                           --docker-server=${NEXUS_REGISTRY} \
+//                           --docker-username=student \
+//                           --docker-password=Imcc@2025 \
+//                           --namespace=${NAMESPACE} \
+//                           --dry-run=client -o yaml | kubectl apply -f -
+//                     '''
+//                 }
+//             }
+//         }
 
-        /* Deploy to Kubernetes */
-        stage('Deploy to Kubernetes') {
-            steps {
-                container('kubectl') {
-                    sh '''
-                        echo "Applying Deployment & Service"
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
+//         /* Deploy to Kubernetes */
+//         stage('Deploy to Kubernetes') {
+//             steps {
+//                 container('kubectl') {
+//                     sh '''
+//                         echo "Applying Deployment & Service"
+//                         kubectl apply -f k8s/deployment.yaml
+//                         kubectl apply -f k8s/service.yaml
 
-                        echo "Waiting for backend rollout"
-                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
-                    '''
-                }
-            }
-        }
-    }
-}
+//                         echo "Waiting for backend rollout"
+//                         kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
+//                     '''
+//                 }
+//             }
+//         }
+//     }
+// }
 
 
 // pipeline {
@@ -1278,3 +1278,249 @@ spec:
 
 //     }
 // }
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  hostPID: true
+  containers:
+
+  - name: node
+    image: node:20.11
+    command: ["cat"]
+    tty: true
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+
+  - name: sonar-scanner
+    image: sonarsource/sonar-scanner-cli
+    command: ["cat"]
+    tty: true
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "384Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["cat"]
+    tty: true
+    securityContext:
+      runAsUser: 0
+    env:
+    - name: KUBECONFIG
+      value: /kube/config
+    volumeMounts:
+    - name: kubeconfig-secret
+      mountPath: /kube/config
+      subPath: kubeconfig
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+  - name: dind
+    image: docker:dind
+    args: ["--storage-driver=overlay2"]
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    volumeMounts:
+    - name: docker-config
+      mountPath: /etc/docker/daemon.json
+      subPath: daemon.json
+    - name: docker-graph-storage
+      mountPath: /var/lib/docker
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+
+  - name: jnlp
+    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "300m"
+        memory: "512Mi"
+
+  volumes:
+  - name: docker-config
+    configMap:
+      name: docker-daemon-config
+  - name: kubeconfig-secret
+    secret:
+      secretName: kubeconfig-secret
+  - name: docker-graph-storage
+    emptyDir: {}
+'''
+        }
+    }
+
+    environment {
+        NAMESPACE = 'ecommerce-2401077'
+        NEXUS_REGISTRY = 'nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077'
+    }
+
+    stages {
+
+        /* CHECK */
+        stage('CHECK') {
+            steps {
+                echo "Pipeline running for namespace ${NAMESPACE}"
+            }
+        }
+
+        /* Build Frontend */
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    container('node') {
+                        sh '''
+                            echo "Cleaning npm cache"
+                            npm cache clean --force || true
+
+                            echo "Setting Node memory"
+                            export NODE_OPTIONS="--max-old-space-size=2048"
+
+                            echo "Adding node_modules/.bin to PATH"
+                            export PATH=$PATH:./node_modules/.bin
+
+                            echo "Installing dependencies"
+                            npm install
+
+                            echo "Running Vite build"
+                            npm run build
+                        '''
+                    }
+                }
+            }
+        }
+
+        /* Build Backend */
+        stage('Build Backend') {
+            steps {
+                dir('backend') {
+                    container('node') {
+                        sh '''
+                            npm cache clean --force || true
+                            export NODE_OPTIONS="--max-old-space-size=2048"
+                            npm install
+                        '''
+                    }
+                }
+            }
+        }
+
+        /* Build Docker Images */
+        stage('Build Docker Images') {
+            steps {
+                container('dind') {
+                    sh '''
+                        sleep 10
+                        echo "Building Docker images..."
+
+                        docker build -t ecommerce__project-frontend:latest ./frontend
+                        docker build -t ecommerce__project-backend:latest ./backend
+                    '''
+                }
+            }
+        }
+
+        /* SonarQube */
+        stage('SonarQube Analysis') {
+            steps {
+                container('sonar-scanner') {
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=ecommerce-2401077 \
+                        -Dsonar.sources=frontend,backend \
+                        -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                        -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+                    '''
+                }
+            }
+        }
+
+        /* Nexus Login */
+        stage('Login to Nexus Registry') {
+            steps {
+                container('dind') {
+                    sh '''
+                        docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
+                    '''
+                }
+            }
+        }
+
+        /* Push Images to Nexus */
+        stage('Push Images to Nexus') {
+            steps {
+                container('dind') {
+                    sh '''
+                        docker tag ecommerce__project-frontend:latest ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
+                        docker tag ecommerce__project-backend:latest ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
+
+                        docker push ${NEXUS_REGISTRY}/ecommerce__project-frontend:latest
+                        docker push ${NEXUS_REGISTRY}/ecommerce__project-backend:latest
+                    '''
+                }
+            }
+        }
+
+        /* Create Namespace + Secret */
+        stage('Create Namespace + Secrets') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                        kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
+
+                        kubectl create secret docker-registry nexus-secret \
+                          --docker-server=${NEXUS_REGISTRY} \
+                          --docker-username=student \
+                          --docker-password=Imcc@2025 \
+                          --namespace=${NAMESPACE} \
+                          --dry-run=client -o yaml | kubectl apply -f -
+                    '''
+                }
+            }
+        }
+
+        /* Deploy to Kubernetes */
+        stage('Deploy to Kubernetes') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                        echo "Deploying to Kubernetes..."
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+
+                        echo "Waiting for backend rollout..."
+                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
+                    '''
+                }
+            }
+        }
+    }
+}
