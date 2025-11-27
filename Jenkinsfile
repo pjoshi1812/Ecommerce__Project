@@ -1290,6 +1290,7 @@ spec:
 
   - name: node
     image: node:20.11
+    imagePullPolicy: IfNotPresent
     command: ["cat"]
     tty: true
     resources:
@@ -1302,6 +1303,7 @@ spec:
 
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
+    imagePullPolicy: IfNotPresent
     command: ["cat"]
     tty: true
     resources:
@@ -1314,6 +1316,7 @@ spec:
 
   - name: kubectl
     image: bitnami/kubectl:latest
+    imagePullPolicy: IfNotPresent
     command: ["cat"]
     tty: true
     securityContext:
@@ -1334,7 +1337,9 @@ spec:
         memory: "512Mi"
 
   - name: dind
-    image: docker:dind
+    # use a recent, compatible dind image (daemon + client)
+    image: docker:24-dind
+    imagePullPolicy: IfNotPresent
     args: ["--storage-driver=overlay2"]
     securityContext:
       privileged: true
@@ -1357,6 +1362,7 @@ spec:
 
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+    imagePullPolicy: IfNotPresent
     resources:
       requests:
         cpu: "100m"
