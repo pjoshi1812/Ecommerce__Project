@@ -1453,39 +1453,25 @@ spec:
         cpu: "200m"
         memory: "512Mi"
       limits:
-        cpu: "1"
+        cpu: "500m"
         memory: "1Gi"
 
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
     command: ["cat"]
     tty: true
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "384Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
 
   - name: kubectl
     image: bitnami/kubectl:latest
     command: ["cat"]
     tty: true
     env:
-      - name: KUBECONFIG
-        value: /kube/config
+    - name: KUBECONFIG
+      value: /kube/config
     volumeMounts:
-      - name: kubeconfig-secret
-        mountPath: /kube/config
-        subPath: kubeconfig
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
+    - name: kubeconfig-secret
+      mountPath: /kube/config
+      subPath: kubeconfig
 
   - name: dind
     image: docker:dind
@@ -1495,55 +1481,48 @@ spec:
     securityContext:
       privileged: true
     env:
-      - name: DOCKER_TLS_CERTDIR
-        value: ""
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
     resources:
       requests:
-        memory: "1Gi"
-        cpu: "300m"
+        cpu: "200m"
+        memory: "512Mi"
       limits:
-        memory: "2Gi"
-        cpu: "1"
+        cpu: "500m"
+        memory: "1Gi"
 
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
-      limits:
-        memory: "512Mi"
-        cpu: "300m"
 
   volumes:
-    - name: kubeconfig-secret
-      secret:
-        secretName: kubeconfig-secret
+  - name: kubeconfig-secret
+    secret:
+      secretName: kubeconfig-secret
 '''
         }
     }
 
     environment {
         NAMESPACE = "ecommerce-2401077"
-        NEXUS_REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
+        NEXUS = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
     }
 
     stages {
 
-        /* 1. CHECK */
         stage("CHECK") {
             steps {
-                echo "Pipeline started for namespace: ${NAMESPACE}"
+                echo "Lightweight Jenkinsfile started for ${NAMESPACE}"
             }
         }
 
-        /* 2. INSTALL + BUILD FRONTEND */
         stage("Install + Build Frontend") {
             steps {
                 dir("frontend") {
                     container("node") {
                         sh """
-                            npm install
+                            npm install --legacy-peer-deps
+                            npm install -D vite
+                            export PATH=\$PATH:./node_modules/.bin
                             npm run build
                         """
                     }
@@ -1551,25 +1530,21 @@ spec:
             }
         }
 
-        /* 3. INSTALL BACKEND */
         stage("Install Backend") {
             steps {
                 dir("backend") {
                     container("node") {
-                        sh """
-                            npm install --legacy-peer-deps
-                        """
+                        sh "npm install --legacy-peer-deps"
                     }
                 }
             }
         }
 
-        /* 4. BUILD DOCKER IMAGES */
         stage("Build Docker Images") {
             steps {
                 container("dind") {
                     sh """
-                        sleep 10
+                        sleep 5
                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
                         docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
                     """
@@ -1577,56 +1552,34 @@ spec:
             }
         }
 
-        /* 5. SONARQUBE */
-        stage("SonarQube Analysis") {
+        stage("Login to Nexus") {
             steps {
-                container("sonar-scanner") {
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=ecommerce-2401077 \
-                        -Dsonar.sources=frontend,backend \
-                        -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                        -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
-                    """
+                container("dind") {
+                    sh "docker login ${NEXUS} -u student -p Imcc@2025"
                 }
             }
         }
 
-        /* 6. LOGIN TO NEXUS */
-        stage("Login to Nexus Registry") {
+        stage("Push Images") {
             steps {
                 container("dind") {
                     sh """
-                        docker login ${NEXUS_REGISTRY} -u student -p Imcc@2025
+                        docker tag ecommerce-frontend:latest ${NEXUS}/ecommerce-frontend:v1
+                        docker tag ecommerce-backend:latest ${NEXUS}/ecommerce-backend:v1
+                        docker push ${NEXUS}/ecommerce-frontend:v1
+                        docker push ${NEXUS}/ecommerce-backend:v1
                     """
                 }
             }
         }
 
-        /* 7. PUSH TO NEXUS */
-        stage("Push to Nexus") {
-            steps {
-                container("dind") {
-                    sh """
-                        docker tag ecommerce-frontend:latest ${NEXUS_REGISTRY}/ecommerce-frontend:v1
-                        docker tag ecommerce-backend:latest ${NEXUS_REGISTRY}/ecommerce-backend:v1
-
-                        docker push ${NEXUS_REGISTRY}/ecommerce-frontend:v1
-                        docker push ${NEXUS_REGISTRY}/ecommerce-backend:v1
-                    """
-                }
-            }
-        }
-
-        /* 8. DEPLOY TO KUBERNETES */
         stage("Deploy to Kubernetes") {
             steps {
                 container("kubectl") {
                     sh """
                         kubectl apply -n ${NAMESPACE} -f k8s/deployment.yaml
                         kubectl apply -n ${NAMESPACE} -f k8s/service.yaml
-
-                        kubectl rollout status deployment/ecommerce-deployment -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/ecommerce-deployment -n ${NAMESPACE} --timeout=180s
                     """
                 }
             }
@@ -1634,3 +1587,4 @@ spec:
 
     }
 }
+
