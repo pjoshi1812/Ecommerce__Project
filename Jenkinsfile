@@ -819,7 +819,6 @@
 //     }
 // }
 
-
 pipeline {
     agent {
         kubernetes {
@@ -828,7 +827,6 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-
   - name: node
     image: mirror.gcr.io/library/node:20
     command: ["cat"]
@@ -843,35 +841,31 @@ spec:
     image: bitnami/kubectl:latest
     command: ["cat"]
     tty: true
+    securityContext:
+      runAsUser: 0
     env:
     - name: KUBECONFIG
       value: /kube/config
     volumeMounts:
-    - mountPath: /kube/config
-      name: kubeconfig-secret
+    - name: kubeconfig-secret
+      mountPath: /kube/config
       subPath: kubeconfig
 
   - name: dind
     image: docker:dind
-    args: ["--storage-driver=overlay2"]
+    args:
+      - "--storage-driver=overlay2"
+      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
     securityContext:
       privileged: true
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
-    volumeMounts:
-    - mountPath: /etc/docker/daemon.json
-      name: docker-config
-      subPath: daemon.json
 
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
 
   volumes:
-  - name: docker-config
-    configMap:
-      name: docker-daemon-config
-
   - name: kubeconfig-secret
     secret:
       secretName: kubeconfig-secret
@@ -879,31 +873,25 @@ spec:
         }
     }
 
-    environment {
-        NAMESPACE = "ecommerce-2401077"
-        REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
-    }
-
     stages {
 
-        stage('CLEAN OLD AGENT PODS') {
+        /* 🔥 NEW STAGE: CLEAN OLD JENKINS AGENT PODS */
+        stage('Clean Old Jenkins Pods') {
             steps {
                 container('kubectl') {
                     sh '''
-                        echo "Cleaning old Jenkins agent pods..."
-                        kubectl delete pod -n jenkins --field-selector=status.phase==Succeeded || true
-                        kubectl delete pod -n jenkins --field-selector=status.phase==Failed || true
+                        echo "🧹 Cleaning old Jenkins agent pods..."
+                        
+                        kubectl get pods -n jenkins | grep 'ecommerce2401077' | awk '{print $1}' | \
+                        xargs -r kubectl delete pod -n jenkins || true
+
+                        echo "✔ Cleanup complete"
                     '''
                 }
             }
         }
 
-        stage('CHECK') {
-            steps {
-                echo "Pipeline active. Using namespace = ${NAMESPACE}"
-            }
-        }
-
+        /* 1. INSTALL + BUILD FRONTEND */
         stage('Install + Build Frontend') {
             steps {
                 dir('frontend') {
@@ -917,16 +905,20 @@ spec:
             }
         }
 
+        /* 2. INSTALL BACKEND */
         stage('Install Backend') {
             steps {
                 dir('backend') {
                     container('node') {
-                        sh 'npm install'
+                        sh '''
+                            npm install
+                        '''
                     }
                 }
             }
         }
 
+        /* 3. BUILD DOCKER IMAGES */
         stage('Build Docker Images') {
             steps {
                 container('dind') {
@@ -939,7 +931,8 @@ spec:
             }
         }
 
-        stage('SonarQube Scan') {
+        /* 4. SONARQUBE */
+        stage('SonarQube Analysis') {
             steps {
                 container('sonar-scanner') {
                     sh '''
@@ -953,47 +946,37 @@ spec:
             }
         }
 
+        /* 5. LOGIN TO NEXUS */
         stage('Login to Nexus Registry') {
             steps {
                 container('dind') {
                     sh '''
-                        docker login ${REGISTRY} -u student -p Imcc@2025
+                        docker login http://nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085 \
+                            -u student -p Imcc@2025
                     '''
                 }
             }
         }
 
-        stage('Push Images to Nexus') {
+        /* 6. PUSH IMAGES TO NEXUS */
+        stage('Push to Nexus') {
             steps {
                 container('dind') {
                     sh '''
-                        docker tag ecommerce-backend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
-                        docker tag ecommerce-frontend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+                        docker tag ecommerce-frontend:latest \
+                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
 
-                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
-                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+                        docker tag ecommerce-backend:latest \
+                        nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
+
+                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-frontend:v1
+                        docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077/ecommerce-backend:v1
                     '''
                 }
             }
         }
 
-        stage('Create Namespace + Secret') {
-            steps {
-                container('kubectl') {
-                    sh '''
-                        kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
-
-                        kubectl create secret docker-registry nexus-secret \
-                        --docker-server=${REGISTRY} \
-                        --docker-username=student \
-                        --docker-password=Imcc@2025 \
-                        --namespace=${NAMESPACE} \
-                        --dry-run=client -o yaml | kubectl apply -f -
-                    '''
-                }
-            }
-        }
-
+        /* 7. DEPLOY TO K8S */
         stage('Deploy to Kubernetes') {
             steps {
                 container('kubectl') {
@@ -1001,7 +984,7 @@ spec:
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
 
-                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
+                        kubectl rollout status deployment/ecommerce-backend -n ecommerce-2401077 --timeout=180s
                     '''
                 }
             }
