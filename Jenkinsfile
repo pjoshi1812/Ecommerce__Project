@@ -1288,7 +1288,7 @@ kind: Pod
 spec:
   containers:
 
-  # ---------------- NODE CONTAINER (Frontend + Backend Build) ----------------
+  // ---------------- NODE CONTAINER (Frontend + Backend Build) ----------------
   - name: node
     image: mirror.gcr.io/library/node:20
     command: ["cat"]
@@ -1301,13 +1301,13 @@ spec:
         cpu: "1"
         memory: "2Gi"
 
-  # ---------------- SONAR SCANNER ----------------
+  // ---------------- SONAR SCANNER ----------------
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
     command: ["cat"]
     tty: true
 
-  # ---------------- KUBECTL ----------------
+  // ---------------- KUBECTL ----------------
   - name: kubectl
     image: bitnami/kubectl:latest
     command: ["cat"]
@@ -1320,7 +1320,7 @@ spec:
         mountPath: /kube/config
         subPath: kubeconfig
 
-  # ---------------- DOCKER (DinD) ----------------
+  // ---------------- DOCKER (DinD) ----------------
   - name: dind
     image: docker:dind
     args:
@@ -1339,7 +1339,7 @@ spec:
         memory: "2Gi"
         cpu: "1"
 
-  # ---------------- JENKINS AGENT ----------------
+  // ---------------- JENKINS AGENT ----------------
   - name: jnlp
     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
 
@@ -1364,7 +1364,7 @@ spec:
             }
         }
 
-        # ---------------- FRONTEND BUILD ----------------
+        // ---------------- FRONTEND BUILD ----------------
         stage("Install + Build Frontend") {
             steps {
                 dir("frontend") {
@@ -1392,7 +1392,7 @@ spec:
             }
         }
 
-        # ---------------- BACKEND BUILD ----------------
+        // ---------------- BACKEND BUILD ----------------
         stage("Install Backend") {
             steps {
                 dir("backend") {
@@ -1405,7 +1405,7 @@ spec:
             }
         }
 
-        # ---------------- DOCKER BUILD ----------------
+        // ---------------- DOCKER BUILD ----------------
         stage("Build Docker Images") {
             steps {
                 container("dind") {
@@ -1419,7 +1419,7 @@ spec:
             }
         }
 
-        # ---------------- SONARQUBE ----------------
+        // ---------------- SONARQUBE ----------------
         stage("SonarQube Analysis") {
             steps {
                 container("sonar-scanner") {
@@ -1434,7 +1434,7 @@ spec:
             }
         }
 
-        # ---------------- DOCKER LOGIN ----------------
+        // ---------------- DOCKER LOGIN ----------------
         stage("Login to Nexus") {
             steps {
                 container("dind") {
@@ -1445,7 +1445,7 @@ spec:
             }
         }
 
-        # ---------------- PUSH IMAGES ----------------
+        // ---------------- PUSH IMAGES ----------------
         stage("Push Images to Nexus") {
             steps {
                 container("dind") {
@@ -1460,7 +1460,7 @@ spec:
             }
         }
 
-        # ---------------- KUBERNETES DEPLOY ----------------
+        // ---------------- KUBERNETES DEPLOY ----------------
         stage("Deploy to Kubernetes") {
             steps {
                 container("kubectl") {
