@@ -10,7 +10,7 @@ spec:
 
   - name: node
     image: mirror.gcr.io/library/node:20
-    command: ["cat"]
+    command: ["sh", "-c", "cat"]
     tty: true
     resources:
       requests:
@@ -22,20 +22,20 @@ spec:
 
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
-    command: ["cat"]
+    command: ["sh", "-c", "cat"]
     tty: true
 
   - name: kubectl
     image: bitnami/kubectl:latest
-    command: ["cat"]
-    tty: true
+    command: ["sh", "-c", "cat"]
     env:
-    - name: KUBECONFIG
-      value: /kube/config
+      - name: KUBECONFIG
+        value: /opt/bitnami/kubectl/.kube/config
     volumeMounts:
-    - name: kubeconfig-secret
-      mountPath: /kube/config
-      subPath: kubeconfig
+      - name: kubeconfig-secret
+        mountPath: /opt/bitnami/kubectl/.kube
+        subPath: .
+
 
   - name: dind
     image: docker:dind
