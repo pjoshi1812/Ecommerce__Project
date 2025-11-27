@@ -991,6 +991,140 @@
 //         }
 //     }
 // }
+// pipeline {
+//     agent {
+//         kubernetes {
+//             yaml """
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
+//   - name: dind
+//     image: docker:dind
+//     securityContext:
+//       privileged: true
+//     env:
+//     - name: DOCKER_TLS_CERTDIR
+//       value: ""
+//     args:
+//     - "--storage-driver=overlay2"
+//     tty: true
+
+//   - name: jnlp
+//     image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+//     args: ['']
+//     tty: true
+
+//   restartPolicy: Never
+// """
+//         }
+//     }
+
+//     environment {
+//         REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+//         NAMESPACE = "ecommerce-2401077"
+//     }
+
+//     stages {
+
+//         stage('CHECK') {
+//             steps {
+//                 echo "Pipeline running in lightweight mode."
+//             }
+//         }
+
+//         stage('Install + Build Frontend') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker run --rm -v \$PWD/frontend:/app -w /app node:20 bash -c "
+//                           npm install &&
+//                           npm run build
+//                         "
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Install Backend') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker run --rm -v \$PWD/backend:/app -w /app node:20 bash -c "
+//                           npm install
+//                         "
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Build Docker Images') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
+//                         docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('SonarQube') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker run --rm \
+//                           -v \$PWD:/workspace \
+//                           sonarsource/sonar-scanner-cli \
+//                           -Dsonar.projectKey=Ecommerce-Project2401077 \
+//                           -Dsonar.sources=frontend,backend \
+//                           -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+//                           -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Login to Nexus') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker login ${REGISTRY} -u student -p Imcc@2025
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Push Images') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker tag ecommerce-frontend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+//                         docker tag ecommerce-backend:latest  ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+
+//                         docker push ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
+//                         docker push ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Deploy to Kubernetes') {
+//             steps {
+//                 container('dind') {
+//                     sh """
+//                         docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl \
+//                           apply -f k8s/deployment.yaml
+
+//                         docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl \
+//                           apply -f k8s/service.yaml
+//                     """
+//                 }
+//             }
+//         }
+
+//     }
+// }
 pipeline {
     agent {
         kubernetes {
@@ -1011,8 +1145,7 @@ spec:
     tty: true
 
   - name: jnlp
-    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
-    args: ['']
+    image: jenkins/inbound-agent:3309.v27b9314fd1a4-1
     tty: true
 
   restartPolicy: Never
@@ -1022,6 +1155,7 @@ spec:
 
     environment {
         REGISTRY = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+        PROJECT = "ecommerce-2401077"
         NAMESPACE = "ecommerce-2401077"
     }
 
@@ -1029,7 +1163,7 @@ spec:
 
         stage('CHECK') {
             steps {
-                echo "Pipeline running in lightweight mode."
+                echo "Pipeline running..."
             }
         }
 
@@ -1062,21 +1196,21 @@ spec:
             steps {
                 container('dind') {
                     sh """
-                        docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
-                        docker build -t ecommerce-backend:latest -f backend/Dockerfile backend/
+                        docker build -t ecommerce-frontend:v1 -f frontend/Dockerfile frontend/
+                        docker build -t ecommerce-backend:v1  -f backend/Dockerfile backend/
                     """
                 }
             }
         }
 
-        stage('SonarQube') {
+        stage('SonarQube Scan') {
             steps {
                 container('dind') {
                     sh """
                         docker run --rm \
                           -v \$PWD:/workspace \
                           sonarsource/sonar-scanner-cli \
-                          -Dsonar.projectKey=Ecommerce-Project2401077 \
+                          -Dsonar.projectKey=$PROJECT \
                           -Dsonar.sources=frontend,backend \
                           -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
                           -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
@@ -1099,11 +1233,11 @@ spec:
             steps {
                 container('dind') {
                     sh """
-                        docker tag ecommerce-frontend:latest ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
-                        docker tag ecommerce-backend:latest  ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+                        docker tag ecommerce-frontend:v1 ${REGISTRY}/${PROJECT}/ecommerce-frontend:v1
+                        docker tag ecommerce-backend:v1  ${REGISTRY}/${PROJECT}/ecommerce-backend:v1
 
-                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-frontend:latest
-                        docker push ${REGISTRY}/ecommerce-2401077/ecommerce-backend:latest
+                        docker push ${REGISTRY}/${PROJECT}/ecommerce-frontend:v1
+                        docker push ${REGISTRY}/${PROJECT}/ecommerce-backend:v1
                     """
                 }
             }
@@ -1113,11 +1247,8 @@ spec:
             steps {
                 container('dind') {
                     sh """
-                        docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl \
-                          apply -f k8s/deployment.yaml
-
-                        docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl \
-                          apply -f k8s/service.yaml
+                        docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl apply -f k8s/deployment.yaml
+                        docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl apply -f k8s/service.yaml
                     """
                 }
             }
