@@ -18,7 +18,7 @@ spec:
     tty: true
 
   - name: kubectl
-    image: ghcr.io/cybozu-go/kubectl:1.29
+    image: mirror.gcr.io/google_containers/kubectl:v1.28.0
     command:
       - sh
       - -c
