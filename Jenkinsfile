@@ -20,7 +20,7 @@ spec:
     tty: true
 
   - name: kubectl
-    image: bitnami/kubectl:latest
+    image: bitnami/kubectl:1.29-debian-11-r8
     command: 
       - sh
       - -c
