@@ -18,16 +18,20 @@ spec:
     tty: true
 
   - name: kubectl
-    image: bitnami/kubectl:latest
-    command: ['cat']
+    image: mirror.gcr.io/google-containers/kubectl:v1.28.0
+    command:
+      - sh
+      - -c
+      - cat
     tty: true
     env:
-    - name: KUBECONFIG
-      value: /kube/config
+      - name: KUBECONFIG
+        value: /kube/config
     volumeMounts:
-    - name: kubeconfig-secret
-      mountPath: /kube/config
-      subPath: kubeconfig
+      - name: kubeconfig-secret
+        mountPath: /kube/config
+        subPath: kubeconfig
+
 
   - name: dind
     image: docker:dind
