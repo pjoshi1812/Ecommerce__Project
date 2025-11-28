@@ -20,8 +20,8 @@ spec:
     tty: true
 
   - name: kubectl
-    image: lachlanevenson/k8s-kubectl:v1.29.0
-    command: ['cat']
+    image: registry.k8s.io/kubectl:v1.29.0
+    command: ["sh", "-c", "cat"]
     tty: true
     env:
     - name: KUBECONFIG
