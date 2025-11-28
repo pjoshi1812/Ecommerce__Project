@@ -18,7 +18,7 @@ spec:
     tty: true
 
   - name: kubectl
-    image: mirror.gcr.io/google-containers/kubectl:v1.28.0
+    image: bitnami/kubectl:latest
     command:
       - sh
       - -c
