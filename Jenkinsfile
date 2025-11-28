@@ -18,36 +18,25 @@ spec:
     tty: true
 
   - name: kubectl
-    image: mirror.gcr.io/google_containers/kubectl:v1.28.0
-    command:
-      - sh
-      - -c
-      - cat
+    image: bitnami/kubectl:latest
+    command: ['cat']
     tty: true
     env:
-      - name: KUBECONFIG
-        value: /kube/config
+    - name: KUBECONFIG
+      value: /kube/config
     volumeMounts:
-      - name: kubeconfig-secret
-        mountPath: /kube/config
-        subPath: kubeconfig
-
-
-
+    - name: kubeconfig-secret
+      mountPath: /kube/config
+      subPath: kubeconfig
 
   - name: dind
     image: docker:dind
-    args:
-      - "--storage-driver=overlay2"
-      - "--insecure-registry=nexus.imcc.com:8085"
-      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
-      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local"
+    args: ["--storage-driver=overlay2", "--insecure-registry=nexus.imcc.com:8085"]
     securityContext:
       privileged: true
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
-
 
   volumes:
   - name: kubeconfig-secret
@@ -56,7 +45,6 @@ spec:
 '''
         }
     }
-
     environment {
         NAMESPACE = "ecommerce-2401077"
         NEXUS     = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
