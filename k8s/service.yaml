@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-frontend-service
-  namespace: ecommerce-2401077
+  namespace: "2401077"
 spec:
   type: NodePort
   selector:
