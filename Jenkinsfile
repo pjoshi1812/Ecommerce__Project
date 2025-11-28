@@ -31,12 +31,17 @@ spec:
 
   - name: dind
     image: docker:dind
-    args: ["--storage-driver=overlay2", "--insecure-registry=nexus.imcc.com:8085"]
+    args:
+      - "--storage-driver=overlay2"
+      - "--insecure-registry=nexus.imcc.com:8085"
+      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local"
     securityContext:
       privileged: true
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
+
 
   volumes:
   - name: kubeconfig-secret
