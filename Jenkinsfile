@@ -31,7 +31,10 @@ spec:
 
   - name: dind
     image: docker:dind
-    args: ["--storage-driver=overlay2", "--insecure-registry=nexus.imcc.com:8085"]
+    args:
+      - "--storage-driver=overlay2"
+      - "--insecure-registry=nexus.imcc.com:8085"
+      - "--insecure-registry=nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
     securityContext:
       privileged: true
     env:
@@ -45,9 +48,11 @@ spec:
 '''
         }
     }
+
     environment {
         NAMESPACE = "ecommerce-2401077"
-        NEXUS     = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ecommerce-2401077"
+        NEXUS_HOST = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
+        NEXUS_REPO = "ecommerce-2401077" 
     }
 
     stages {
@@ -85,7 +90,6 @@ spec:
             steps {
                 container("dind") {
                     sh """
-                        
                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
                         docker build -t ecommerce-backend:latest  -f backend/Dockerfile  backend/
                     """
@@ -110,7 +114,11 @@ spec:
         stage("Login to Nexus") {
             steps {
                 container("dind") {
-                    sh "docker login ${NEXUS} -u student -p Imcc@2025"
+                    sh """
+                        docker login http://${NEXUS_HOST} \
+                        -u student \
+                        -p Imcc@2025
+                    """
                 }
             }
         }
@@ -119,10 +127,11 @@ spec:
             steps {
                 container("dind") {
                     sh """
-                        docker tag ecommerce-frontend:latest ${NEXUS}/ecommerce-frontend:v1
-                        docker tag ecommerce-backend:latest  ${NEXUS}/ecommerce-backend:v1
-                        docker push ${NEXUS}/ecommerce-frontend:v1
-                        docker push ${NEXUS}/ecommerce-backend:v1
+                        docker tag ecommerce-frontend:latest ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v1
+                        docker tag ecommerce-backend:latest  ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v1
+
+                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v1
+                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v1
                     """
                 }
             }
@@ -152,6 +161,5 @@ spec:
                 }
             }
         }
-
     }
 }
