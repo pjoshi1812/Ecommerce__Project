@@ -18,8 +18,11 @@ spec:
     tty: true
 
   - name: kubectl
-    image: bitnami/kubectl:latest
-    command: ['cat']
+    image: registry.k8s.io/kubectl:v1.28.0
+    command:
+      - sh
+      - -c
+      - cat
     tty: true
     env:
     - name: KUBECONFIG
@@ -28,6 +31,7 @@ spec:
     - name: kubeconfig-secret
       mountPath: /kube/config
       subPath: kubeconfig
+
 
   - name: dind
     image: docker:dind
