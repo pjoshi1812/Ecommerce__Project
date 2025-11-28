@@ -17,7 +17,7 @@ spec:
     command: ['cat']
     tty: true
 
-   - name: kubectl
+  - name: kubectl
     image: ghcr.io/cybozu-go/kubectl:1.29
     command:
       - sh
@@ -25,12 +25,13 @@ spec:
       - cat
     tty: true
     env:
-    - name: KUBECONFIG
-      value: /kube/config
+      - name: KUBECONFIG
+        value: /kube/config
     volumeMounts:
-    - name: kubeconfig-secret
-      mountPath: /kube/config
-      subPath: kubeconfig
+      - name: kubeconfig-secret
+        mountPath: /kube/config
+        subPath: kubeconfig
+
 
 
 
