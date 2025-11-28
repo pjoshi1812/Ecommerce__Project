@@ -54,7 +54,7 @@ spec:
     }
 
     environment {
-        NAMESPACE = "ecommerce-2401077"
+        NAMESPACE = "2401077"
         NEXUS_HOST = "nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085"
         NEXUS_REPO = "ecommerce-2401077" 
     }
