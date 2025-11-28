@@ -20,11 +20,8 @@ spec:
     tty: true
 
   - name: kubectl
-    image: bitnami/kubectl:1.29-debian-11-r8
-    command: 
-      - sh
-      - -c
-      - cat
+    image: bitnami/kubectl:1.29.3-debian-11-r37
+    command: ["cat"]
     tty: true
     env:
     - name: KUBECONFIG
@@ -33,6 +30,7 @@ spec:
     - name: kubeconfig-secret
       mountPath: /kube/config
       subPath: kubeconfig
+
 
   - name: dind
     image: docker:dind
