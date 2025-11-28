@@ -17,8 +17,8 @@ spec:
     command: ['cat']
     tty: true
 
-  - name: kubectl
-    image: registry.k8s.io/kubectl:v1.28.0
+   - name: kubectl
+    image: ghcr.io/cybozu-go/kubectl:1.29
     command:
       - sh
       - -c
@@ -31,6 +31,7 @@ spec:
     - name: kubeconfig-secret
       mountPath: /kube/config
       subPath: kubeconfig
+
 
 
   - name: dind
