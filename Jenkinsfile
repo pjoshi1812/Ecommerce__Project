@@ -21,7 +21,10 @@ spec:
 
   - name: kubectl
     image: registry.k8s.io/kubectl:v1.29.0
-    command: ["sh", "-c", "cat"]
+    command:
+      - sh
+      - -c
+      - cat
     tty: true
     env:
     - name: KUBECONFIG
@@ -30,6 +33,7 @@ spec:
     - name: kubeconfig-secret
       mountPath: /kube/config
       subPath: kubeconfig
+
 
 
 
