@@ -10,24 +10,21 @@ spec:
 
   - name: node
     image: mirror.gcr.io/library/node:20
-    command: ["cat"]
+    command: ['cat']
     tty: true
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
+
 
   - name: sonar-scanner
     image: sonarsource/sonar-scanner-cli
-    command: ["cat"]
+    command: ['cat']
     tty: true
 
   - name: kubectl
     image: bitnami/kubectl:latest
-    command: ["cat"]
+    command: 
+      - sh
+      - -c
+      - cat
     tty: true
     env:
     - name: KUBECONFIG
@@ -47,16 +44,7 @@ spec:
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
-
-  - name: jnlp
-    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+  
 
   volumes:
   - name: kubeconfig-secret
@@ -79,37 +67,24 @@ spec:
             }
         }
 
-        stage("Install + Build Frontend") {
+        stage('Install + Build Frontend') {
             steps {
-                dir("frontend") {
-                    container("node") {
-                        sh """
-                            # Prefer npm ci if package-lock.json exists
-                            if [ -f package-lock.json ]; then
-                              npm ci || npm install --legacy-peer-deps
-                            else
-                              npm install --legacy-peer-deps
-                            fi
-
-                            export PATH=\$PATH:./node_modules/.bin
+                dir('frontend') {
+                    container('node') {
+                        sh '''
+                            npm install
                             npm run build
-                        """
+                        '''
                     }
                 }
             }
         }
 
-        stage("Install Backend") {
+        stage('Install Backend') {
             steps {
-                dir("backend") {
-                    container("node") {
-                        sh """
-                            if [ -f package-lock.json ]; then
-                              npm ci || npm install --legacy-peer-deps
-                            else
-                              npm install --legacy-peer-deps
-                            fi
-                        """
+                dir('backend') {
+                    container('node') {
+                        sh 'npm install'
                     }
                 }
             }
@@ -119,10 +94,24 @@ spec:
             steps {
                 container("dind") {
                     sh """
-                        sleep 5
+                        
                         docker build -t ecommerce-frontend:latest -f frontend/Dockerfile frontend/
                         docker build -t ecommerce-backend:latest  -f backend/Dockerfile  backend/
                     """
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                container('sonar-scanner') {
+                    sh '''
+                        sonar-scanner \
+                            -Dsonar.projectKey=Ecommerce-Project2401077 \
+                            -Dsonar.sources=backend,frontend \
+                            -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                            -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+                    '''
                 }
             }
         }
@@ -148,16 +137,27 @@ spec:
             }
         }
 
-        stage("Deploy to Kubernetes") {
+        stage('Deploy to Kubernetes') {
             steps {
-                container("kubectl") {
-                    sh """
+                container('kubectl') {
+                    sh '''
+                        echo "===== Using kubeconfig ====="
+                        ls -l /kube || true
+                        cat /kube/config || true
+
+                        echo "===== Applying Deployment ====="
                         kubectl apply -n ${NAMESPACE} -f k8s/deployment.yaml
+
+                        echo "===== Applying Service ====="
                         kubectl apply -n ${NAMESPACE} -f k8s/service.yaml
 
-                        # IMPORTANT: name must match metadata.name in deployment.yaml
-                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=180s
-                    """
+                        echo "===== Rollout Status ====="
+                        kubectl rollout status deployment/ecommerce-frontend -n ${NAMESPACE} --timeout=60s || true
+                        kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=60s || true
+
+                        echo "===== Pods ====="
+                        kubectl get pods -n ${NAMESPACE}
+                    '''
                 }
             }
         }
