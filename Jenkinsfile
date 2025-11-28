@@ -189,17 +189,20 @@ spec:
   - name: kubectl
     image: bitnami/kubectl:latest
     command:
-      - sh
-      - -c
-      - cat
+        - /bin/sh
+        - -c
+        - sleep infinity
     tty: true
+    securityContext:
+        runAsUser: 0
+        readOnlyRootFilesystem: false
     env:
-      - name: KUBECONFIG
+        - name: KUBECONFIG
         value: /kube/config
     volumeMounts:
-      - name: kubeconfig-secret
+        - name: kubeconfig-secret
         mountPath: /kube/config
-        subPath: kubeconfig
+        subPath: kubeconfig   
 
 
   - name: dind
