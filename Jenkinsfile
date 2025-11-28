@@ -18,7 +18,7 @@ spec:
     tty: true
 
   - name: kubectl
-    image: bitnami/kubectl:latest
+    image: registry.k8s.io/kubectl:v1.27.3
     command:
       - sh
       - -c
