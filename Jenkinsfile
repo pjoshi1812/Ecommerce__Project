@@ -188,7 +188,10 @@ spec:
 
   - name: kubectl
     image: bitnami/kubectl:latest
-    command: ["sh", "-c", "cat"]
+    command:
+      - sh
+      - -c
+      - cat
     tty: true
     env:
       - name: KUBECONFIG
@@ -197,6 +200,7 @@ spec:
       - name: kubeconfig-secret
         mountPath: /kube/config
         subPath: kubeconfig
+
 
   - name: dind
     image: docker:dind
