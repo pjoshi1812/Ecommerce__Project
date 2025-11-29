@@ -77,42 +77,109 @@
 # ========================================
 # FRONTEND SERVICE
 # ========================================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-frontend-service
+#   namespace: "2401077"
+# spec:
+#   selector:
+#     app: ecommerce-frontend
+#   ports:
+#     - protocol: TCP
+#       port: 3000
+#       targetPort: 3000
+#   type: ClusterIP
+
+# ---
+# # ========================================
+# # BACKEND SERVICE
+# # ========================================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-backend-service
+#   namespace: "2401077"
+# spec:
+#   selector:
+#     app: ecommerce-backend
+#   ports:
+#     - protocol: TCP
+#       port: 5000
+#       targetPort: 9000
+#   type: ClusterIP
+
+# ---
+# # ========================================
+# # INGRESS
+# # ========================================
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ecommerce-ingress
+#   namespace: "2401077"
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: suvarnarup-prajakta.imcc.com
+#       http:
+#         paths:
+#           # ---- Frontend ----
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-frontend-service
+#                 port:
+#                   number: 3000
+
+#           # ---- Backend ----
+#           - path: /api
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-backend-service
+#                 port:
+#                   number: 5000
+# ============================
+# FRONTEND SERVICE
+# ============================
 apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-frontend-service
   namespace: "2401077"
 spec:
+  type: ClusterIP
   selector:
     app: ecommerce-frontend
   ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-  type: ClusterIP
+    - port: 80
+      targetPort: 80
 
 ---
-# ========================================
+# ============================
 # BACKEND SERVICE
-# ========================================
+# ============================
 apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-backend-service
   namespace: "2401077"
 spec:
+  type: ClusterIP
   selector:
     app: ecommerce-backend
   ports:
-    - protocol: TCP
-      port: 5000
+    - port: 9000
       targetPort: 9000
-  type: ClusterIP
 
 ---
-# ========================================
-# INGRESS
-# ========================================
+# ============================
+# INGRESS (Frontend + Backend)
+# ============================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -126,20 +193,20 @@ spec:
     - host: suvarnarup-prajakta.imcc.com
       http:
         paths:
-          # ---- Frontend ----
+          # ---------- FRONTEND ----------
           - path: /
             pathType: Prefix
             backend:
               service:
                 name: ecommerce-frontend-service
                 port:
-                  number: 3000
+                  number: 80
 
-          # ---- Backend ----
+          # ---------- BACKEND ----------
           - path: /api
             pathType: Prefix
             backend:
               service:
                 name: ecommerce-backend-service
                 port:
-                  number: 5000
+                  number: 9000
