@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance with backend URL from .env
 const api = axios.create({
-  baseURL: "http://suvarnarup-prajakta.imcc.com" + "/api",
+  baseURL: "http://suvarnarup-prajakta.imcc.com/api",
 });
 
 // Add interceptor to include token dynamically

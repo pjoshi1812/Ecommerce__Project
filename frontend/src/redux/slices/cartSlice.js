@@ -1,13 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Centralized Axios instance with env-driven base URL and safe fallback to relative '/api'
-const API = axios.create({
-  baseURL:
-    (import.meta.env.VITE_BACKEND_URL
-      ? `${import.meta.env.VITE_BACKEND_URL}`
-      : "") + "/api",
-});
+// Use relative URLs so Nginx can proxy in production
+const API_URL = "http://suvarnarup-prajakta.imcc.com";
 
 // Helper functions
 const loadCartFromStorage = () => {
@@ -32,7 +27,7 @@ export const fetchCart = createAsyncThunk(
       } else if (guestId) {
         config.params = { guestId };
       }
-      const response = await API.get("/cart", config);
+      const response = await axios.get(API_URL + "/api/cart", config);
       return response.data || { products: [] };
     } catch (error) {
       return rejectWithValue(
@@ -50,8 +45,8 @@ export const addToCart = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await API.post(
-        "/cart",
+      const response = await axios.post(
+        API_URL + "/api/cart",
         { productId, quantity, category, collections, guestId, userId },
         {
           headers: {
@@ -79,7 +74,7 @@ export const updateCartItemQuantity = createAsyncThunk(
       if (!productId || !category || !collections)
         return rejectWithValue({ message: "Missing required fields" });
       const parsedQuantity = Math.min(Math.max(parseInt(quantity), 0), 99);
-      const response = await API.put("/cart", {
+      const response = await axios.put(API_URL + "/api/cart", {
         productId,
         quantity: parsedQuantity,
         category,
@@ -112,7 +107,7 @@ export const removeFromCart = createAsyncThunk(
         },
         data: { productId, category, collections, guestId, userId },
       };
-      const response = await API.delete("/cart", config);
+      const response = await axios.delete(API_URL + "/api/cart", config);
       if (response.data?.cart) {
         saveCartToStorage(response.data.cart);
         return response.data.cart;
@@ -149,8 +144,8 @@ export const mergeCart = createAsyncThunk(
   "cart/mergeCart",
   async ({ guestId, userId }, { rejectWithValue }) => {
     try {
-      const response = await API.post(
-        "/cart/merge",
+      const response = await axios.post(
+        API_URL + "/api/cart/merge",
         { guestId, userId },
         {
           headers: {

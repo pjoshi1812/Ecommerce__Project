@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance for API
 const api = axios.create({
-  baseURL: "https://suvarnarup-prajakta.imcc.com/api", // relative path, Nginx proxy handles backend
+  baseURL: "http://suvarnarup-prajakta.imcc.com/api", // relative path, Nginx proxy handles backend
 });
 
 const getAuthToken = () => `Bearer ${localStorage.getItem("userToken")}`;

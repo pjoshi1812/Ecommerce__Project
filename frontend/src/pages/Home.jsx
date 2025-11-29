@@ -77,7 +77,7 @@ const Home = () => {
     }))
     const fetchBestSellerProducts = async () => {
       try {
-        const response = await axios.get('/api/products/best-seller')
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/products/best-seller`)
         const bestSeller = response.data
         setBestSellerProduct({
           ...bestSeller,
