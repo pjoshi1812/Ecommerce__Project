@@ -307,8 +307,8 @@ spec:
   selector:
     app: ecommerce-backend
   ports:
-    - port: 5000         # ✅ FIXED
-      targetPort: 5000   # ✅ FIXED
+    - port: 5000         
+      targetPort: 5000   
 
 ---
 # ============================
@@ -319,15 +319,13 @@ kind: Ingress
 metadata:
   name: ecommerce-ingress
   namespace: "2401077"
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
     - host: suvarnarup-prajakta.imcc.com
       http:
         paths:
-          # ---------- FRONTEND ----------
+          # ---------- FRONTEND (NO REWRITE) ----------
           - path: /
             pathType: Prefix
             backend:
@@ -336,11 +334,12 @@ spec:
                 port:
                   number: 80
 
-          # ---------- BACKEND ----------
+          # ---------- BACKEND (NO REWRITE) ----------
           - path: /api
             pathType: Prefix
             backend:
               service:
                 name: ecommerce-backend-service
                 port:
-                  number: 5000     
+                  number: 5000
+
