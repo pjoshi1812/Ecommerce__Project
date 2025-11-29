@@ -244,15 +244,13 @@ spec:
                 dir('frontend') {
                     container('node') {
                         sh '''
-                            npm install --legacy-peer-deps
-                            npm install -D vite
+                            npm install
                             npm run build
                         '''
                     }
                 }
             }
         }
-
 
         /* BACKEND INSTALL */
         stage('Install Backend') {

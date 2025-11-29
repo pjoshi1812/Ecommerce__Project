@@ -277,69 +277,69 @@
 #                 name: ecommerce-backend-service
 #                 port:
 #                   number: 5000     
-# ============================
-# FRONTEND SERVICE
-# ============================
-apiVersion: v1
-kind: Service
-metadata:
-  name: ecommerce-frontend-service
-  namespace: "2401077"
-spec:
-  type: ClusterIP
-  selector:
-    app: ecommerce-frontend
-  ports:
-    - port: 80
-      targetPort: 80
+# # ============================
+# # FRONTEND SERVICE
+# # ============================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-frontend-service
+#   namespace: "2401077"
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: ecommerce-frontend
+#   ports:
+#     - port: 80
+#       targetPort: 80
 
----
-# ============================
-# BACKEND SERVICE
-# ============================
-apiVersion: v1
-kind: Service
-metadata:
-  name: ecommerce-backend-service
-  namespace: "2401077"
-spec:
-  type: ClusterIP
-  selector:
-    app: ecommerce-backend
-  ports:
-    - port: 5000         
-      targetPort: 5000   
+# ---
+# # ============================
+# # BACKEND SERVICE
+# # ============================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-backend-service
+#   namespace: "2401077"
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: ecommerce-backend
+#   ports:
+#     - port: 5000         
+#       targetPort: 5000   
 
----
-# ============================
-# INGRESS (Frontend + Backend)
-# ============================
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ecommerce-ingress
-  namespace: "2401077"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: suvarnarup-prajakta.imcc.com
-      http:
-        paths:
-          # ---------- FRONTEND (NO REWRITE) ----------
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ecommerce-frontend-service
-                port:
-                  number: 80
+# ---
+# # ============================
+# # INGRESS (Frontend + Backend)
+# # ============================
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ecommerce-ingress
+#   namespace: "2401077"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: suvarnarup-prajakta.imcc.com
+#       http:
+#         paths:
+#           # ---------- FRONTEND (NO REWRITE) ----------
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-frontend-service
+#                 port:
+#                   number: 80
 
-          # ---------- BACKEND (NO REWRITE) ----------
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: ecommerce-backend-service
-                port:
-                  number: 5000
+#           # ---------- BACKEND (NO REWRITE) ----------
+#           - path: /api
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-backend-service
+#                 port:
+#                   number: 5000
 

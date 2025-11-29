@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Use relative API URLs for production (Nginx will proxy to backend)
-const API_URL = "https://suvarnarup-prajakta.imcc.com/api";
+const API_URL = "/api";
 
 // Helper function for auth header
 const getAuthHeader = () => ({

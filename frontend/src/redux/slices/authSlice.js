@@ -287,7 +287,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Use relative URLs so Nginx can proxy in production
-const API_URL = "http://suvarnarup-prajakta.imcc.com/api"; // no hostname/port, frontend calls relative path
+const API_URL = "/api"; // no hostname/port, frontend calls relative path
 
 // Retrieve user info and token from localStorage if available
 const userFromStorage = localStorage.getItem("userInfo")

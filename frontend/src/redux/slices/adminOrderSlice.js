@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance with backend URL from .env
 const api = axios.create({
-  baseURL: "http://suvarnarup-prajakta.imcc.com/api",
+  baseURL: import.meta.env.VITE_BACKEND_URL + "/api",
 });
 
 // Add interceptor to include token dynamically
@@ -54,7 +54,6 @@ export const deleteOrder = createAsyncThunk(
     }
   }
 );
-
 
 // Slice
 const adminOrderSlice = createSlice({
