@@ -3,7 +3,10 @@ import axios from "axios";
 
 // Axios instance for API calls
 const API = axios.create({
-  baseURL: "https://suvarnarup-prajakta.imcc.com/api", // Use relative URL for proper proxy through Nginx
+  baseURL:
+    (import.meta.env.VITE_BACKEND_URL
+      ? `${import.meta.env.VITE_BACKEND_URL}`
+      : "") + "/api", // Use relative URL for proper proxy through Nginx
 });
 
 // -------------------- Async Thunks --------------------
@@ -11,7 +14,16 @@ const API = axios.create({
 // Fetch products by filters
 export const fetchProductsByFilters = createAsyncThunk(
   "products/fetchByFilters",
-  async ({ price_min, price_max, category, collections, rating, numReviews, weight, name }) => {
+  async ({
+    price_min,
+    price_max,
+    category,
+    collections,
+    rating,
+    numReviews,
+    weight,
+    name,
+  }) => {
     const query = new URLSearchParams();
     if (collections) query.append("collections", collections);
     if (price_max) query.append("maxPrice", price_max);
@@ -32,7 +44,7 @@ export const fetchProductDetails = createAsyncThunk(
   "products/fetchProductDetails",
   async (id) => {
     try {
-      const response = await axios.get(`/api/products/${id}`);
+      const response = await API.get(`/products/${id}`);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch product details:", error);
@@ -46,12 +58,12 @@ export const updateProduct = createAsyncThunk(
   "products/updateProduct",
   async ({ id, productData }) => {
     try {
-      const response = await axios.put(`/api/products/${id}`, productData, {
+      const response = await API.put(`/products/${id}`, productData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-      },
-    });
-    return response.data;
+        },
+      });
+      return response.data;
     } catch (error) {
       console.error("Failed to update product:", error);
       throw error;
@@ -64,7 +76,7 @@ export const fetchSimilarProducts = createAsyncThunk(
   "products/fetchSimilarProducts",
   async ({ id }) => {
     try {
-      const response = await axios.get(`/api/products/similar/${id}`);
+      const response = await API.get(`/products/similar/${id}`);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch similar products:", error);
@@ -78,7 +90,7 @@ export const fetchBestSeller = createAsyncThunk(
   "products/fetchBestSeller",
   async () => {
     try {
-      const response = await axios.get("/api/products/best-seller");
+      const response = await API.get("/products/best-seller");
       return response.data;
     } catch (error) {
       console.error("Failed to fetch best sellers:", error);
@@ -92,7 +104,7 @@ export const fetchNewArrivals = createAsyncThunk(
   "products/fetchNewArrivals",
   async () => {
     try {
-      const response = await axios.get("/api/products/new-arrivals");
+      const response = await API.get("/products/new-arrivals");
       return response.data;
     } catch (error) {
       console.error("Failed to fetch new arrivals:", error);
@@ -192,7 +204,9 @@ const productSlice = createSlice({
       })
       .addCase(fetchSimilarProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.similarProducts = Array.isArray(action.payload) ? action.payload : [];
+        state.similarProducts = Array.isArray(action.payload)
+          ? action.payload
+          : [];
       })
       .addCase(fetchSimilarProducts.rejected, (state, action) => {
         state.loading = false;
