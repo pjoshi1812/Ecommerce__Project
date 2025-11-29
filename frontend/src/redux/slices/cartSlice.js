@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+// Use relative URLs so Nginx can proxy in production
+const API_URL = "http://suvarnarup-prajakta.imcc.com";
+
 // Helper functions
 const loadCartFromStorage = () => {
   const storedCart = localStorage.getItem("cart");
@@ -22,7 +25,7 @@ export const fetchCart = createAsyncThunk(
       } else if (guestId) {
         config.params = { guestId };
       }
-      const response = await axios.get("/api/cart", config);
+      const response = await axios.get(API_URL + "/api/cart", config);
       return response.data || { products: [] };
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Failed to fetch cart" });
@@ -35,7 +38,7 @@ export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async ({ productId, quantity, category, collections, guestId, userId }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
+      const response = await axios.post(API_URL+
         "/api/cart",
         { productId, quantity, category, collections, guestId, userId },
         { headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` } }
@@ -54,7 +57,7 @@ export const updateCartItemQuantity = createAsyncThunk(
     try {
       if (!productId || !category || !collections) return rejectWithValue({ message: "Missing required fields" });
       const parsedQuantity = Math.min(Math.max(parseInt(quantity), 0), 99);
-      const response = await axios.put("/api/cart", { productId, quantity: parsedQuantity, category, collections, guestId, userId });
+      const response = await axios.put(API_URL+"/api/cart", { productId, quantity: parsedQuantity, category, collections, guestId, userId });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Failed to update cart item" });
@@ -69,7 +72,7 @@ export const removeFromCart = createAsyncThunk(
     try {
       if (!productId || !category || !collections) return rejectWithValue({ message: "Missing required fields" });
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` }, data: { productId, category, collections, guestId, userId } };
-      const response = await axios.delete("/api/cart", config);
+      const response = await axios.delete(API_URL+"/api/cart", config);
       if (response.data?.cart) { saveCartToStorage(response.data.cart); return response.data.cart; }
 
       const currentState = getState();
@@ -89,7 +92,7 @@ export const mergeCart = createAsyncThunk(
   "cart/mergeCart",
   async ({ guestId, userId }, { rejectWithValue }) => {
     try {
-      const response = await axios.post("/api/cart/merge", { guestId, userId }, { headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` } });
+      const response = await axios.post(API_URL+"/api/cart/merge", { guestId, userId }, { headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` } });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Failed to merge cart" });

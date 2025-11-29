@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance for API calls
 const API = axios.create({
-  baseURL: "/api", // Use relative URL for proper proxy through Nginx
+  baseURL: "https://suvarnarup-prajakta.imcc.com/api", // Use relative URL for proper proxy through Nginx
 });
 
 // -------------------- Async Thunks --------------------

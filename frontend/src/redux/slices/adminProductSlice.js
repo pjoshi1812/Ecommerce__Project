@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance for API
 const api = axios.create({
-  baseURL: "/api", // relative path, Nginx proxy handles backend
+  baseURL: "https://suvarnarup-prajakta.imcc.com/api", // relative path, Nginx proxy handles backend
 });
 
 const getAuthToken = () => `Bearer ${localStorage.getItem("userToken")}`;
@@ -13,7 +13,7 @@ export const fetchAdminProducts = createAsyncThunk(
   "adminProducts/fetchProducts",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/admin/products", {
+      const response = await api.get(baseURL+"/admin/products", {
         headers: { Authorization: getAuthToken() },
       });
       return response.data;
@@ -30,7 +30,7 @@ export const createProduct = createAsyncThunk(
   "adminProducts/createProduct",
   async (productData, { rejectWithValue }) => {
     try {
-      const response = await api.post("/admin/products", productData, {
+      const response = await api.post(baseURL+"/admin/products", productData, {
         headers: {
           Authorization: getAuthToken(),
           "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export const updateProduct = createAsyncThunk(
       dimension,
       weight,
     };
-    const response = await api.put(`/admin/products/${id}`, productData, {
+    const response = await api.put(baseURL+`/admin/products/${id}`, productData, {
       headers: {
         Authorization: getAuthToken(),
         "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export const deleteProduct = createAsyncThunk(
   "adminProducts/deleteProduct",
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/admin/products/${id}`, {
+      await api.delete(baseURL+`/admin/products/${id}`, {
         headers: { Authorization: getAuthToken() },
       });
       return id;

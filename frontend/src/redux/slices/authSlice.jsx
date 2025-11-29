@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Centralized API base URL (for relative paths with Nginx proxy)
-const API_URL = ""; // empty string for relative paths
+const API_URL = "http://suvarnarup-prajakta.imcc.com/"; // empty string for relative paths
 
 // Retrieve user info and token from localStorage if available
 const userFromStorage = localStorage.getItem("userInfo")
@@ -28,7 +28,7 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post("/api/users/login", userData);
+      const { data } = await axios.post(API_URL + "/api/users/login", userData);
 
       if (data.success) {
         localStorage.setItem("userInfo", JSON.stringify(data.user));
@@ -50,7 +50,7 @@ export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post("/api/users/register", userData);
+      const { data } = await axios.post(API_URL + "/api/users/register", userData);
 
       localStorage.setItem("userInfo", JSON.stringify(data.user));
       localStorage.setItem("userToken", data.token);

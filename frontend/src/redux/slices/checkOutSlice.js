@@ -6,7 +6,7 @@ export const createCheckout = createAsyncThunk(
   "checkout/createCheckout",
   async (checkoutData, { rejectWithValue }) => {
     try {
-      const response = await axios.post("/api/checkout", checkoutData, {
+      const response = await axios.post("http://suvarnarup-prajakta.imcc.com/api/checkout", checkoutData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
@@ -26,7 +26,7 @@ export const updatePaymentStatus = createAsyncThunk(
   async ({ checkoutId, paymentDetails }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `/api/checkout/${checkoutId}/pay`,
+        `http://suvarnarup-prajakta.imcc.com/api/checkout/${checkoutId}/pay`,
         { paymentStatus: "paid", paymentDetails },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` },
@@ -47,7 +47,7 @@ export const finalizeOrder = createAsyncThunk(
   async (checkoutId, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `/api/checkout/${checkoutId}/finalize`,
+        `http://suvarnarup-prajakta.imcc.com/api/checkout/${checkoutId}/finalize`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` } }
       );

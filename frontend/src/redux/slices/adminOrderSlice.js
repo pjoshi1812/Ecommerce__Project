@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Axios instance with backend URL from .env
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL + "/api",
+  baseURL: "http://suvarnarup-prajakta.imcc.com" + "/api",
 });
 
 // Add interceptor to include token dynamically
@@ -20,7 +20,7 @@ export const fetchAllOrders = createAsyncThunk(
   "adminOrders/fetchAllOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/admin/orders");
+      const response = await api.get(baseURL+"/admin/orders");
       return response.data;
     } catch (error) {
       console.error(error);
@@ -33,7 +33,7 @@ export const updateOrderStatus = createAsyncThunk(
   "adminOrders/updateOrderStatus",
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/admin/orders/${id}`, { status });
+      const response = await api.put(baseURL+`/admin/orders/${id}`, { status });
       return response.data;
     } catch (error) {
       console.error(error);
@@ -46,7 +46,7 @@ export const deleteOrder = createAsyncThunk(
   "adminOrders/deleteOrder",
   async ({ id }, { rejectWithValue }) => {
     try {
-      await api.delete(`/admin/orders/${id}`);
+      await api.delete(baseURL+`/admin/orders/${id}`);
       return id;
     } catch (error) {
       console.error(error);
