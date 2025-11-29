@@ -214,6 +214,72 @@
 # ============================
 # FRONTEND SERVICE
 # ============================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-frontend-service
+#   namespace: "2401077"
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: ecommerce-frontend
+#   ports:
+#     - port: 80
+#       targetPort: 80
+
+# ---
+# # ============================
+# # BACKEND SERVICE
+# # ============================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ecommerce-backend-service
+#   namespace: "2401077"
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: ecommerce-backend
+#   ports:
+#     - port: 5000        
+#       targetPort: 5000 
+# ---
+# # ============================
+# # INGRESS (Frontend + Backend)
+# # ============================
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ecommerce-ingress
+#   namespace: "2401077"
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: suvarnarup-prajakta.imcc.com
+#       http:
+#         paths:
+#           # ---------- FRONTEND ----------
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-frontend-service
+#                 port:
+#                   number: 80
+
+#           # ---------- BACKEND ----------
+#           - path: /api
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: ecommerce-backend-service
+#                 port:
+#                   number: 5000     
+# ============================
+# FRONTEND SERVICE
+# ============================
 apiVersion: v1
 kind: Service
 metadata:
@@ -241,8 +307,9 @@ spec:
   selector:
     app: ecommerce-backend
   ports:
-    - port: 5000        
-      targetPort: 5000 
+    - port: 5000         # ✅ FIXED
+      targetPort: 5000   # ✅ FIXED
+
 ---
 # ============================
 # INGRESS (Frontend + Backend)
