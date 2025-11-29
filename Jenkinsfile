@@ -239,17 +239,19 @@ spec:
         }
 
         /* FRONTEND BUILD */
-stage('Install + Build Frontend') {
-    dir('frontend') {
-        container('node') {
-            sh '''
-                npm install --legacy-peer-deps
-                npm install -D vite
-                npm run build
-            '''
+        stage('Install + Build Frontend') {
+            steps {
+                dir('frontend') {
+                    container('node') {
+                        sh '''
+                            npm install --legacy-peer-deps
+                            npm install -D vite
+                            npm run build
+                        '''
+                    }
+                }
+            }
         }
-    }
-}
 
 
         /* BACKEND INSTALL */
