@@ -323,10 +323,6 @@ spec:
             steps {
                 container('kubectl') {
                     sh '''
-                        echo "===== Using kubeconfig ====="
-                        ls -l /kube || true
-                        cat /kube/config || true
-
                         echo "===== Applying Deployment ====="
                         kubectl apply -n ${NAMESPACE} -f k8s/deployment.yaml
 
@@ -337,8 +333,6 @@ spec:
                         kubectl rollout status deployment/ecommerce-frontend -n ${NAMESPACE} --timeout=60s || true
                         kubectl rollout status deployment/ecommerce-backend -n ${NAMESPACE} --timeout=60s || true
 
-                        echo "===== Pods ====="
-                        kubectl get pods -n ${NAMESPACE}
                     '''
                 }
             }
