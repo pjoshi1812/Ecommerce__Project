@@ -276,7 +276,7 @@ spec:
               service:
                 name: ecommerce-backend-service
                 port:
-                  number: 5000     
+                  number: 9000     
 # # ============================
 # # FRONTEND SERVICE
 # # ============================
