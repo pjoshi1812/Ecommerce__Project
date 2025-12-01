@@ -93,7 +93,7 @@ const EditProductPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/products/${id}`, {
+        const response = await axios.get(`/api/admin/products/${id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('userToken')}`,
           }

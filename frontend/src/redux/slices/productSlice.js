@@ -44,7 +44,7 @@ export const fetchProductDetails = createAsyncThunk(
   "products/fetchProductDetails",
   async (id) => {
     try {
-      const response = await axios.get(`/api/products/${id}`);
+      const response = await API.get(`/products/${id}`);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch product details:", error);
@@ -58,7 +58,7 @@ export const updateProduct = createAsyncThunk(
   "products/updateProduct",
   async ({ id, productData }) => {
     try {
-      const response = await axios.put(`/api/products/${id}`, productData, {
+      const response = await API.put(`/products/${id}`, productData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
@@ -76,7 +76,7 @@ export const fetchSimilarProducts = createAsyncThunk(
   "products/fetchSimilarProducts",
   async ({ id }) => {
     try {
-      const response = await axios.get(`/api/products/similar/${id}`);
+      const response = await API.get(`/products/similar/${id}`);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch similar products:", error);
@@ -90,7 +90,7 @@ export const fetchBestSeller = createAsyncThunk(
   "products/fetchBestSeller",
   async () => {
     try {
-      const response = await axios.get("/api/products/best-seller");
+      const response = await API.get("/products/best-seller");
       return response.data;
     } catch (error) {
       console.error("Failed to fetch best sellers:", error);
@@ -104,7 +104,7 @@ export const fetchNewArrivals = createAsyncThunk(
   "products/fetchNewArrivals",
   async () => {
     try {
-      const response = await axios.get("/api/products/new-arrivals");
+      const response = await API.get("/products/new-arrivals");
       return response.data;
     } catch (error) {
       console.error("Failed to fetch new arrivals:", error);

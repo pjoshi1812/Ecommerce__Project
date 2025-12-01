@@ -56,7 +56,7 @@ const Productdetails = ({ productId: propId }) => {
     if (!productId) return;
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}`);
+        const res = await axios.get(`/api/products/${productId}`);
         setSelectedProduct(res.data);
       } catch (err) {
         console.error(err);

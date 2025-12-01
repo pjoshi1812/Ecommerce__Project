@@ -3,7 +3,10 @@ import axios from "axios";
 
 // Axios instance with backend URL from .env
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL + "/api",
+  baseURL:
+    (import.meta.env.VITE_BACKEND_URL
+      ? `${import.meta.env.VITE_BACKEND_URL}`
+      : "") + "/api",
 });
 
 // Add interceptor to include token dynamically
@@ -87,13 +90,20 @@ const adminOrderSlice = createSlice({
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const updatedOrder = action.payload;
-        const idx = state.adminOrders.findIndex(o => o._id === updatedOrder._id);
+        const idx = state.adminOrders.findIndex(
+          (o) => o._id === updatedOrder._id
+        );
         if (idx !== -1) state.adminOrders[idx] = updatedOrder;
       })
       .addCase(deleteOrder.fulfilled, (state, action) => {
-        state.adminOrders = state.adminOrders.filter(o => o._id !== action.payload);
+        state.adminOrders = state.adminOrders.filter(
+          (o) => o._id !== action.payload
+        );
         state.totalOrders = state.adminOrders.length;
-        state.totalSales = state.adminOrders.reduce((acc, o) => acc + o.totalPrice, 0);
+        state.totalSales = state.adminOrders.reduce(
+          (acc, o) => acc + o.totalPrice,
+          0
+        );
       });
   },
 });
