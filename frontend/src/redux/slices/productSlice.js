@@ -142,7 +142,8 @@
 
 // export const {setFilters,clearFilters}=productSlice.actions;
 // export default productSlice.reducer
-import { createSlice, createAsyncThunk } from "@redux/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
 import axios from "axios";
 
 const API_URL = "http://suvarnarup-prajakta.imcc.com/api";
