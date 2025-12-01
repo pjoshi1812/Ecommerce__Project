@@ -604,7 +604,7 @@ spec:
           ports:
             - containerPort: 9000
           env:
-            - name: MONGO_URI
+            - name: MONGO_URL
               value: "mongodb+srv://prajaktajoshi2003:JglbBmZqEmw5myKp@cluster0.on4cy.mongodb.net/suvarnarup"
             - name: JWT_SECRET
               value: "0893d61211e0c9beed3d44697bc27342c7e1bef0a5fd6a94c357c5aa52a1f06d92b49a66ffc7f4469314928d2fca66552af49a9c902f642451d5382b701c996d"
