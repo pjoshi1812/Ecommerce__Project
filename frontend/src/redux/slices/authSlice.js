@@ -401,136 +401,88 @@ import axios from "axios";
 const API_URL = "http://suvarnarup-prajakta.imcc.com/api";
 
 // ===============================
-// User Login
+// Login
 // ===============================
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-
-      // Save token
-      localStorage.setItem("userToken", response.data.token);
-
+      const response = await axios.post(`${API_URL}/auth/login`, formData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Login failed"
-      );
+      return rejectWithValue("Invalid login credentials");
     }
   }
 );
 
 // ===============================
-// User Register
+// Register
 // ===============================
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
-  async (userData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, userData);
+      const response = await axios.post(`${API_URL}/auth/register`, formData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Registration failed"
-      );
+      return rejectWithValue("Registration failed");
     }
   }
 );
-
-// ===============================
-// Load User Profile
-// ===============================
-export const loadUser = createAsyncThunk(
-  "auth/loadUser",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`${API_URL}/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to load profile"
-      );
-    }
-  }
-);
-
-// ===============================
-// Logout
-// ===============================
-export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  localStorage.removeItem("userToken");
-  return true;
-});
 
 const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: null,
+    token: localStorage.getItem("userToken") || null,
     loading: false,
     error: null,
-    isAuthenticated: !!localStorage.getItem("userToken"),
   },
 
-  reducers: {},
+  reducers: {
+    // ⭐ LOGOUT FIX ADDED HERE ⭐
+    logout: (state) => {
+      state.user = null;
+      state.token = null;
+      localStorage.removeItem("userToken");
+    },
+  },
 
   extraReducers: (builder) => {
     builder
-      // LOGIN
+      // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user || null;
-        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+
+        localStorage.setItem("userToken", action.payload.token);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // REGISTER
+      // Register
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      })
-
-      // LOAD USER
-      .addCase(loadUser.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(loadUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
-      })
-      .addCase(loadUser.rejected, (state, action) => {
-        state.loading = false;
-        state.user = null;
-        state.error = action.payload;
-        state.isAuthenticated = false;
-      })
-
-      // LOGOUT
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
       });
   },
 });
+
+// ⭐ Export logout so Profile.jsx works
+export const { logout } = authSlice.actions;
 
 export default authSlice.reducer;
