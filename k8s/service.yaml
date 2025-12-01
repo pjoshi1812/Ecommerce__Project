@@ -253,7 +253,7 @@ metadata:
   name: ecommerce-ingress
   namespace: "2401077"
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: 
 spec:
   ingressClassName: nginx
   rules:
