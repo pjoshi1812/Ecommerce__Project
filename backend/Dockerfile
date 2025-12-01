@@ -33,30 +33,15 @@
 # # Start your backend application
 # CMD ["node", "server.js"]
 
-# -------- Stage 1: Builder --------
-FROM mirror.gcr.io/library/node:18 AS builder
+FROM node:18
 
 WORKDIR /app
 
-# Copy only package files first (better layer caching)
 COPY package*.json ./
+RUN npm install
 
-# Install only production dependencies
-RUN npm install --production --legacy-peer-deps
-
-# Copy rest of backend source
 COPY . .
 
-# -------- Stage 2: Final Slim Image --------
-FROM mirror.gcr.io/library/node:18-slim
-
-WORKDIR /app
-
-# Copy only required files from builder image
-COPY --from=builder /app /app
-
-# Expose backend port
 EXPOSE 9000
 
-# Start server
 CMD ["node", "server.js"]
