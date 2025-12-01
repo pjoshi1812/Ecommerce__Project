@@ -1,13 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API } from "../../api/API";
 
-// Axios instance for API calls
-const API = axios.create({
-  baseURL:
-    (import.meta.env.VITE_BACKEND_URL
-      ? `${import.meta.env.VITE_BACKEND_URL}`
-      : "") + "/api", // Use relative URL for proper proxy through Nginx
-});
+// Use shared API instance with fixed baseURL
 
 // -------------------- Async Thunks --------------------
 

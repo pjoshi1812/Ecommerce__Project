@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { API } from "../../api/API";
 
 // Fetch all user orders
 export const fetchUserOrders = createAsyncThunk(
   "orders/fetchUserOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/orders/my-orders", {
+      const response = await API.get("/orders/my-orders", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
@@ -25,7 +25,7 @@ export const fetchOrderDetails = createAsyncThunk(
   "orders/fetchOrderDetails",
   async (orderId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/orders/${orderId}`, {
+      const response = await API.get(`/orders/${orderId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
@@ -70,8 +70,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          action.payload?.message || "Failed to fetch orders";
+        state.error = action.payload?.message || "Failed to fetch orders";
       })
 
       // Fetch order details
