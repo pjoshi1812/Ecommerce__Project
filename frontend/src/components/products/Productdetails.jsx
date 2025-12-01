@@ -129,13 +129,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
+import { API } from "I";
 
-const API = axios.create({
-  baseURL:
-    (import.meta.env.VITE_BACKEND_URL
-      ? `${import.meta.env.VITE_BACKEND_URL}`
-      : "") + "/api",
-});
+// const API = axios.create({
+//   baseURL:
+//     (import.meta.env.VITE_BACKEND_URL
+//       ? `${import.meta.env.VITE_BACKEND_URL}`
+//       : "") + "/api",
+// });
 
 const Productdetails = ({ productId: propId }) => {
   const { id: routeId } = useParams();

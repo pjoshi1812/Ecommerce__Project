@@ -124,14 +124,15 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { API } from "../../api/API";
 
 // Use the same API instance everywhere
-const API = axios.create({
-  baseURL:
-    (import.meta.env.VITE_BACKEND_URL
-      ? `${import.meta.env.VITE_BACKEND_URL}`
-      : "") + "/api",
-});
+// const API = axios.create({
+//   baseURL:
+//     (import.meta.env.VITE_BACKEND_URL
+//       ? `${import.meta.env.VITE_BACKEND_URL}`
+//       : "") + "/api",
+// });
 
 const NewArrivals = () => {
   const scrollRef = useRef(null);
