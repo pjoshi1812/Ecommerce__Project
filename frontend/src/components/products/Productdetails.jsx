@@ -129,7 +129,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
-import { API } from "I";
+import { API } from "../../api/api";
 
 // const API = axios.create({
 //   baseURL:
