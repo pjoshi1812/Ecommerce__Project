@@ -129,8 +129,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
-import { API } from "../../api/api";
-
+import {API} from "../../api/API";
 // const API = axios.create({
 //   baseURL:
 //     (import.meta.env.VITE_BACKEND_URL
