@@ -58,58 +58,72 @@ import { useSelector } from "react-redux";
 //   images:[{ url: "https://picsum.photos/500/500?random=10"}]
 // },
 // ]
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
+const API_URL = "http://suvarnarup-prajakta.imcc.com/api";
 
 const Home = () => {
+  const [featured, setFeatured] = useState([]);
 
-  const dispatch = useDispatch()
-  const { products, loading, error } = useSelector((state) => state.products);
-  const [bestSellerProduct, setBestSellerProduct] = useState(null);
-
-
+  const fetchFeatured = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/products/featured`);
+      setFeatured(response.data);
+    } catch (error) {
+      console.error("Failed to fetch featured products:", error);
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchProductsByFilters({
-      category: "Pearl",
-      collections: "VintageCharm",
-      rating: 7.5,
-      limit: 8,
-    }))
-    const fetchBestSellerProducts = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/products/best-seller`)
-        const bestSeller = response.data
-        setBestSellerProduct({
-          ...bestSeller,
-          category: bestSeller.category || 'Pearl',
-          collections: bestSeller.collections || 'VintageCharm'
-        })
-      } catch (error) {
-        console.error(error)
-      }
-    }
-    fetchBestSellerProducts()
-  }, [dispatch])
+    fetchFeatured();
+  }, []);
+
   return (
-    <div><Hero />
-      <CollectionSection />
-      <NewArrivals />
+    <div>
+      {/* Banner Section */}
+      <section className="relative h-[60vh] bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold">SuvarnaRup Collection</h1>
+          <p className="mt-3 text-lg">Premium Gold & Silver Jewellery</p>
 
-      {/* Best Seller */}
-      <h2 className='text-3xl text-center font-bold mb-4'>Best Seller</h2>
-      {bestSellerProduct ? (<Productdetails productId={bestSellerProduct._id} />) : (
-        <p>Loading Best Seller Products </p>
-      )}
+          <Link to="/products">
+            <button className="mt-6 bg-white text-black px-6 py-3 rounded-md hover:bg-gray-200">
+              Shop Now
+            </button>
+          </Link>
+        </div>
+      </section>
 
+      {/* FEATURED PRODUCTS */}
+      <section className="py-12 px-6 max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold mb-6">Featured Products</h2>
 
-      <div className='container mx-auto'>
-        <h2 className='text3xl text-center font-bold mb-4'>
-          SuvarnaRup Best Collection
-        </h2>
-        <ProductGrid products={products} loading={loading} error={error} />
-      </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {featured.map((product) => (
+            <Link
+              key={product._id}
+              to={`/product/${product._id}`}
+              className="border rounded-lg p-4 hover:shadow-lg transition"
+            >
+              <img
+                src={product.img?.[0]?.url || "/placeholder.jpg"}
+                alt={product.name}
+                className="w-full h-40 object-cover rounded"
+              />
+
+              <h3 className="mt-3 text-lg font-semibold">{product.name}</h3>
+
+              <p className="text-gray-600">
+                ₹{product.discountPrice || product.price}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
