@@ -1,161 +1,133 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Use relative API URLs for production (Nginx will proxy to backend)
-const API_URL = "/api";
-
-// Helper function for auth header
-const getAuthHeader = () => ({
-  Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+//  featch all users(admin Only)
+export const featchUsers = createAsyncThunk("admin/featchUsers",async()=>{
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin`,
+        {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+            }
+        }
+    );
+   return response.data;
 });
 
-// ------------------ Async Thunks ------------------
-
-// Fetch all users (Admin only)
-export const fetchUsers = createAsyncThunk(
-  "admin/fetchUsers",
-  async (_, { rejectWithValue }) => {
+// add the create user action 
+export const addUsers = createAsyncThunk("admin/addUsers",async(userData,{rejectWithValue})=>{
     try {
-      const response = await axios.get(`${API_URL}/admin`, {
-        headers: getAuthHeader(),
-      });
-      return response.data;
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/admin/create`,userData,
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+                }
+            }
+        )
+       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Failed to fetch users" }
-      );
+        console.error(error);
+        return rejectWithValue(error.response.data);
     }
-  }
-);
+})
 
-// Add a new user
-export const addUsers = createAsyncThunk(
-  "admin/addUsers",
-  async (userData, { rejectWithValue }) => {
+// update user
+export const updateUser = createAsyncThunk("admin/updateUser",async({id,name,email,role}, {rejectWithValue})=>{
     try {
-      const response = await axios.post(`${API_URL}/admin/create`, userData, {
-        headers: getAuthHeader(),
-      });
-      return response.data;
+        const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/admin/${id}`,
+            {name,email,role},
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+                }
+            }
+        )
+       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Failed to add user" }
-      );
+        console.error(error);
+        return rejectWithValue(error.response.data);
     }
-  }
-);
+})
 
-// Update user
-export const updateUser = createAsyncThunk(
-  "admin/updateUser",
-  async ({ id, name, email, role }, { rejectWithValue }) => {
+export const deleteUser = createAsyncThunk("admin/deleteUser",async(id, {rejectWithValue})=>{
     try {
-      const response = await axios.put(
-        `${API_URL}/admin/${id}`,
-        { name, email, role },
-        { headers: getAuthHeader() }
-      );
-      return response.data;
+         await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/delete/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+                }
+            }
+        )
+       return id;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Failed to update user" }
-      );
+        console.error(error);
+        return rejectWithValue(error.response.data);
     }
-  }
-);
+})
 
-// Delete user
-export const deleteUser = createAsyncThunk(
-  "admin/deleteUser",
-  async (id, { rejectWithValue }) => {
-    try {
-      await axios.delete(`${API_URL}/admin/delete/${id}`, {
-        headers: getAuthHeader(),
-      });
-      return id;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Failed to delete user" }
-      );
-    }
-  }
-);
-
-// ------------------ Admin Slice ------------------
 const adminSlice = createSlice({
-  name: "admin",
-  initialState: {
-    users: [],
-    loading: false,
-    error: null,
-  },
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      // Fetch
-      .addCase(fetchUsers.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.loading = false;
-        state.users = action.payload;
-      })
-      .addCase(fetchUsers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch users";
-      })
+    name: "admin",
+    initialState:{
+        users:[],
+        loading: false,
+        error: null,
+    },
+    reducers:{},
+    extraReducers:(builder)=>{
+        builder
+        .addCase(featchUsers.pending,(state) => {
+            state.loading=true
+        }) 
+        .addCase(featchUsers.fulfilled,(state,action) => {
+            state.loading=false
+            state.users = action.payload
+        }) 
+        .addCase(featchUsers.rejected,(state,action) => {
+            state.loading=false
+            state.error=action.error.message
 
-      // Add
-      .addCase(addUsers.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(addUsers.fulfilled, (state, action) => {
-        state.loading = false;
-        if (action.payload?.user) {
-          state.users.push(action.payload.user);
-        }
-      })
-      .addCase(addUsers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to add user";
-      })
+        }) 
 
-      // Update
-      .addCase(updateUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateUser.fulfilled, (state, action) => {
-        state.loading = false;
-        const updatedUser = action.payload;
-        const index = state.users.findIndex(
-          (user) => user._id === updatedUser._id
-        );
-        if (index !== -1) {
-          state.users[index] = updatedUser;
-        }
-      })
-      .addCase(updateUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to update user";
-      })
 
-      // Delete
-      .addCase(deleteUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.users = state.users.filter((user) => user._id !== action.payload);
-      })
-      .addCase(deleteUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to delete user";
-      });
-  },
+        .addCase(updateUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updateUser.fulfilled,(state,action) => {
+            state.loading = false;
+            const updateUser = action.payload;
+            const userIndex = state.users.findIndex((user) => user._id === updateUser._id);
+            if(userIndex !== -1){
+                state.users[userIndex]=updateUser
+            }
+        })
+        .addCase(updateUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload.message;
+        })
+        .addCase(deleteUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(deleteUser.fulfilled,(state,action) => {
+            state.loading = false;
+            state.users=state.users.filter((user) => user._id!==action.payload)
+        })
+        .addCase(deleteUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload.message;
+        })
+        .addCase(addUsers.pending,(state) => {
+            state.loading = true
+            state.error = null
+        })
+        .addCase(addUsers.fulfilled,(state,action) => {
+            state.loading=false
+            state.users.push(action.payload.user)
+        })
+        .addCase(addUsers.rejected,(state,action) => {
+            state.loading = false
+            state.error = action.payload.message
+        })
+    }
 });
-
 export default adminSlice.reducer;

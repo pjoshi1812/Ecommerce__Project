@@ -1,20 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-
-// Axios instance for API
-const api = axios.create({
-  baseURL: "/api", // relative path, Nginx proxy handles backend
-});
-
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 const getAuthToken = () => `Bearer ${localStorage.getItem("userToken")}`;
-
-// async thunk to fetch admin products
+// async thunk to featch admin products
 export const fetchAdminProducts = createAsyncThunk(
-  "adminProducts/fetchProducts",
+  "adminProducts/featchProducts ",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/admin/products", {
-        headers: { Authorization: getAuthToken() },
+      const response = await axios.get(`${API_URL}/api/admin/products`, {
+        headers: {
+          Authorization: getAuthToken(),
+        },
       });
       return response.data;
     } catch (error) {
@@ -30,12 +26,16 @@ export const createProduct = createAsyncThunk(
   "adminProducts/createProduct",
   async (productData, { rejectWithValue }) => {
     try {
-      const response = await api.post("/admin/products", productData, {
-        headers: {
-          Authorization: getAuthToken(),
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${API_URL}/api/admin/products`,
+        productData,
+        {
+          headers: {
+            Authorization: getAuthToken(),
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error(error);
@@ -46,7 +46,7 @@ export const createProduct = createAsyncThunk(
   }
 );
 
-// Async to update an existing product
+// Async to update an existsing product
 export const updateProduct = createAsyncThunk(
   "adminProducts/updateProduct",
   async ({
@@ -82,23 +82,29 @@ export const updateProduct = createAsyncThunk(
       dimension,
       weight,
     };
-    const response = await api.put(`/admin/products/${id}`, productData, {
-      headers: {
-        Authorization: getAuthToken(),
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await axios.put(
+      `${API_URL}/api/admin/products/${id}`,
+      productData,
+      {
+        headers: {
+          Authorization: getAuthToken(),
+          "Content-Type": "application/json",
+        },
+      }
+    );
     return response.data;
   }
 );
 
-// Async thunk to delete a product
+// Async thunk to delete the product
 export const deleteProduct = createAsyncThunk(
   "adminProducts/deleteProduct",
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/admin/products/${id}`, {
-        headers: { Authorization: getAuthToken() },
+      await axios.delete(`${API_URL}/api/admin/products/${id}`, {
+        headers: {
+          Authorization: getAuthToken(),
+        },
       });
       return id;
     } catch (error) {
@@ -130,7 +136,7 @@ const adminProductSlice = createSlice({
       })
       .addCase(fetchAdminProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch products";
+        state.error = action.error.message;
       })
 
       .addCase(createProduct.pending, (state) => {
@@ -144,6 +150,7 @@ const adminProductSlice = createSlice({
         } else {
           state.products = [action.payload];
         }
+        state.error = null;
       })
       .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
@@ -170,5 +177,4 @@ const adminProductSlice = createSlice({
       });
   },
 });
-
 export default adminProductSlice.reducer;
