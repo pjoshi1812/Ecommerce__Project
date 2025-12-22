@@ -81,7 +81,7 @@ const OrderManagement = () => {
                       <option value="Processing">Processing</option>
                       <option value="Shipped">Shipped</option>
                       <option value="Delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
+                      <option value="Cancelled">Cancelled</option>
                     </select>
                   </td>
                   <td className="p-4 space-x-2">

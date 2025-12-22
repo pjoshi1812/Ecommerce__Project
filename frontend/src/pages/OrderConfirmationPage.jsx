@@ -24,7 +24,7 @@ const OrderConfirmationPage = () => {
             Go to Home
           </Link>
           <Link
-            to="/myorders"
+            to="/profile"
             className="border border-pink-600 text-pink-600 hover:bg-pink-100 py-2 px-6 rounded-full transition"
           >
             View Orders
