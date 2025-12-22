@@ -284,7 +284,7 @@ spec:
                             -Dsonar.projectKey=Ecommerce-Project2401077 \
                             -Dsonar.sources=backend,frontend \
                             -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                            -Dsonar.token=sqp_f3125bc1a5232a0f26c25425a4185377bfa05370
+                            -Dsonar.token=sqp_0c4fac265c3023e99986feba5073cdeb54a49d9e
                     '''
                 }
             }
