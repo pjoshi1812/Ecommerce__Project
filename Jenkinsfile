@@ -308,11 +308,11 @@ spec:
             steps {
                 container("dind") {
                     sh """
-                        docker tag ecommerce-frontend:latest ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v1
-                        docker tag ecommerce-backend:latest  ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v1
+                        docker tag ecommerce-frontend:latest ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v2
+                        docker tag ecommerce-backend:latest  ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v2
 
-                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v1
-                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v1
+                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-frontend:v2
+                        docker push ${NEXUS_HOST}/${NEXUS_REPO}/ecommerce-backend:v2
                     """
                 }
             }
