@@ -564,7 +564,7 @@ spec:
 
   strategy:
     type: Recreate
-    
+
   selector:
     matchLabels:
       app: ecommerce-frontend
@@ -575,7 +575,7 @@ spec:
     spec:
       containers:
         - name: ecommerce-frontend
-          image: 127.0.0.1:30085/ecommerce-2401077/ecommerce-frontend:v2
+          image: 127.0.0.1:30085/ecommerce-2401077/ecommerce-frontend:v1
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -603,7 +603,7 @@ spec:
     spec:
       containers:
         - name: ecommerce-backend
-          image: 127.0.0.1:30085/ecommerce-2401077/ecommerce-backend:v2
+          image: 127.0.0.1:30085/ecommerce-2401077/ecommerce-backend:v1
           imagePullPolicy: Always
           ports:
             - containerPort: 9000
