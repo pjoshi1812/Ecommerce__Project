@@ -561,6 +561,10 @@ metadata:
   namespace: "2401077"
 spec:
   replicas: 1
+
+  strategy:
+    type: Recreate
+    
   selector:
     matchLabels:
       app: ecommerce-frontend
